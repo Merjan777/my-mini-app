@@ -36,8 +36,7 @@
         <div id="warehouse-status">🥚:0 | 🧶:0</div>
     </div>
 
-    <div class="farm-grid" id="farm-grid">
-        </div>
+    <div class="farm-grid" id="farm-grid"></div>
 
     <div class="shop-menu">
         <div class="shop-item">
@@ -56,22 +55,44 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // O'yin ma'lumotlari
         let farmData = {
             balance: 100,
             animals: [],
             warehouse: { eggs: 0, wool: 0 }
         };
 
-        // 1. Ma'lumotlarni Telegram foydalanuvchisidan yuklash
+        // 1. Ma'lumotlarni URL'dan yuklash (MUHIM QISM)
         function initGame() {
-            // Agar foydalanuvchi avval o'ynagan bo'lsa, profil orqali bazadan yuklashimiz mumkin
-            // Hozircha biz oddiygina boshlaymiz, lekin Python'dan inventory kelsa shu yerda o'qiymiz
+            const urlParams = new URLSearchParams(window.location.search);
+            const savedBalance = urlParams.get('b');
+            const savedInv = urlParams.get('i');
+
+            if (savedBalance) {
+                farmData.balance = parseInt(savedBalance);
+            }
+
+            if (savedInv) {
+                // "C:5,S:1" formatini o'qib massivga aylantirish
+                const parts = savedInv.split(',');
+                parts.forEach(part => {
+                    if (part.includes(':')) {
+                        const [type, count] = part.split(':');
+                        const animalType = (type === 'C') ? 'chicken' : 'sheep';
+                        const num = parseInt(count);
+                        for (let i = 0; i < num; i++) {
+                            farmData.animals.push({ 
+                                type: animalType, 
+                                ready: false, 
+                                lastProduced: Date.now() 
+                            });
+                        }
+                    }
+                });
+            }
             updateUI();
             renderFarm();
         }
 
-        // 2. Hayvon sotib olish
         function buyAnimal(type, price) {
             if (farmData.balance >= price) {
                 farmData.balance -= price;
@@ -88,7 +109,6 @@
             }
         }
 
-        // 3. Fermani chizish
         function renderFarm() {
             const grid = document.getElementById('farm-grid');
             grid.innerHTML = '';
@@ -106,10 +126,9 @@
             });
         }
 
-        // 4. Ishlab chiqarish Taymeri
         setInterval(() => {
             farmData.animals.forEach((animal, index) => {
-                let cooldown = animal.type === 'chicken' ? 15000 : 45000; // Tovuq 15s, Qo'y 45s
+                let cooldown = animal.type === 'chicken' ? 15000 : 45000;
                 if (!animal.ready && (Date.now() - animal.lastProduced > cooldown)) {
                     animal.ready = true;
                     let badge = document.getElementById(`badge-${index}`);
@@ -118,23 +137,19 @@
             });
         }, 1000);
 
-        // 5. Mahsulot yig'ish
         function collectProduct(index) {
             let animal = farmData.animals[index];
             if (animal.ready) {
                 if (animal.type === 'chicken') farmData.warehouse.eggs++;
                 if (animal.type === 'sheep') farmData.warehouse.wool++;
-                
                 animal.ready = false;
                 animal.lastProduced = Date.now();
                 document.getElementById(`badge-${index}`).style.display = 'none';
-                
                 tg.HapticFeedback.notificationOccurred('success');
                 updateUI();
             }
         }
 
-        // 6. Sotish
         function sellAll() {
             let profit = (farmData.warehouse.eggs * 2) + (farmData.warehouse.wool * 40);
             if (profit > 0) {
@@ -152,12 +167,9 @@
             document.getElementById('warehouse-status').innerText = `🥚:${farmData.warehouse.eggs} | 🧶:${farmData.warehouse.wool}`;
         }
 
-        // 7. Saqlash va Botga yuborish
         function saveGame() {
             let chickens = farmData.animals.filter(a => a.type === 'chicken').length;
             let sheeps = farmData.animals.filter(a => a.type === 'sheep').length;
-            
-            // Muhim: Biz inventory'ni "C:10,S:2" ko'rinishida yuboramiz
             let invString = `C:${chickens},S:${sheeps}`;
             
             const data = {
@@ -167,9 +179,10 @@
             };
             
             tg.sendData(JSON.stringify(data)); 
-            tg.close();
+            setTimeout(() => { tg.close(); }, 100);
         }
 
+        // Yuklashni boshlash
         initGame();
     </script>
 </body>
