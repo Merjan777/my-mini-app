@@ -2,68 +2,109 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golden Skin Tycoon</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --primary-bg: #0f0c29;
+            --gradient: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+            --gold: #f1c40f;
+            --accent: #e94560;
+        }
+
         body {
-            background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+            background: var(--gradient);
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding-bottom: 20px;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
         }
-        .balance-card {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 20px;
-            margin-top: 30px;
-            text-align: center;
-            width: 85%;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-        #btn-farm {
-            background: #f1c40f;
-            border: none;
-            padding: 20px;
-            border-radius: 50%;
-            width: 140px;
-            height: 140px;
-            font-weight: bold;
-            font-size: 18px;
+
+        .header {
             margin-top: 20px;
-            box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+            text-align: center;
+        }
+
+        .balance-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
+        }
+
+        #balance {
+            font-size: 42px;
+            font-weight: bold;
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            margin: 0;
+        }
+
+        .clicker-section {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #farm-btn {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 8px solid rgba(255, 255, 255, 0.1);
+            background: url('https://cdn-icons-png.flaticon.com/512/217/217853.png') center/cover; /* Tilla tanga rasmi */
+            background-color: var(--gold);
             cursor: pointer;
-            transition: 0.2s;
+            transition: transform 0.1s active;
+            box-shadow: 0 0 50px rgba(241, 196, 15, 0.3);
         }
-        #btn-farm:active { transform: scale(0.9); }
-        
-        .shop-container {
-            width: 85%;
-            margin-top: 30px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            padding: 15px;
+
+        #farm-btn:active {
+            transform: scale(0.92);
         }
+
+        .shop-drawer {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            border-top: 2px solid var(--gold);
+            border-radius: 30px 30px 0 0;
+            padding: 20px;
+            box-sizing: border-box;
+            max-height: 40%;
+            overflow-y: auto;
+        }
+
         .shop-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: rgba(255, 255, 255, 0.05);
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 10px;
+            margin: 8px 0;
+            padding: 12px 20px;
+            border-radius: 15px;
+            transition: background 0.3s;
         }
+
+        .item-info h4 { margin: 0; font-size: 16px; }
+        .item-info p { margin: 0; font-size: 12px; color: #ccc; }
+
         .buy-btn {
-            background: #e67e22;
+            background: var(--accent);
             border: none;
             color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
+            padding: 10px 20px;
+            border-radius: 12px;
             font-weight: bold;
             cursor: pointer;
         }
@@ -71,50 +112,58 @@
 </head>
 <body>
 
-    <div class="balance-card">
-        <h2>💰 Balansingiz</h2>
-        <h1 id="score">0</h1>
+    <div class="header">
+        <h3 style="margin:0; opacity: 0.8;">GOLDEN SKIN TYCOON</h3>
+        <div class="balance-container">
+            <h1 id="balance">0</h1>
+            <span style="font-size: 12px; color: #aaa;">JAMI TANGALAR</span>
+        </div>
     </div>
 
-    <button id="btn-farm">BOSING!</button>
+    <div class="clicker-section">
+        <button id="farm-btn" onclick="farm()"></button>
+    </div>
 
-    <div class="shop-container">
-        <h3>🛒 DO'KON (Skins)</h3>
+    <div class="shop-drawer">
+        <h3 style="text-align: center; margin-top: 0; color: var(--gold);">🛒 SKINLAR DO'KONI</h3>
+        
         <div class="shop-item">
-            <span>🛡️ Pahlavon (100 💰)</span>
-            <button class="buy-btn" onclick="sendToBot('buy_Pahlavon')">OLISH</button>
+            <div class="item-info">
+                <h4>🛡️ Pahlavon Skin</h4>
+                <p>Narxi: 100 tanga</p>
+            </div>
+            <button class="buy-btn" onclick="sendData('buy_Pahlavon')">OLISH</button>
         </div>
+
         <div class="shop-item">
-            <span>⚡ Afsona (500 💰)</span>
-            <button class="buy-btn" onclick="sendToBot('buy_Afsona')">OLISH</button>
-        </div>
-        <div class="shop-item">
-            <span>🔥 Qirol (1000 💰)</span>
-            <button class="buy-btn" onclick="sendToBot('buy_Qirol')">OLISH</button>
+            <div class="item-info">
+                <h4>⚡ Afsona Skin</h4>
+                <p>Narxi: 500 tanga</p>
+            </div>
+            <button class="buy-btn" onclick="sendData('buy_Afsona')">OLISH</button>
         </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        tg.headerColor = '#0f0c29';
 
         let score = 0;
-        const scoreElement = document.getElementById('score');
-        const farmBtn = document.getElementById('btn-farm');
-
-        farmBtn.addEventListener('click', () => {
+        function farm() {
             score += 10;
-            scoreElement.innerText = score;
+            document.getElementById('balance').innerText = score.toLocaleString();
             tg.HapticFeedback.impactOccurred('medium');
-        });
+        }
 
-        // BOTGA MA'LUMOT YUBORISH FUNKSIYASI
-        function sendToBot(action) {
-            const data = {
-                action: action,
-                earned_points: score
-            };
-            tg.sendData(JSON.stringify(data)); // Ma'lumotni JSON qilib yuboradi
+        function sendData(action) {
+            // Botga yuborishdan oldin so'rovni tasdiqlaymiz
+            tg.showConfirm(`Siz haqiqatdan ham ushbu skinni olmoqchimisiz?`, (ok) => {
+                if (ok) {
+                    const data = { action: action, earned_points: score };
+                    tg.sendData(JSON.stringify(data));
+                }
+            });
         }
     </script>
 </body>
