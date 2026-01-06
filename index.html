@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Skin Tycoon</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding-bottom: 20px;
+        }
+        .balance-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 30px;
+            text-align: center;
+            width: 85%;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        #btn-farm {
+            background: #f1c40f;
+            border: none;
+            padding: 20px;
+            border-radius: 50%;
+            width: 140px;
+            height: 140px;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #btn-farm:active { transform: scale(0.9); }
+        
+        .shop-container {
+            width: 85%;
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+        }
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .buy-btn {
+            background: #e67e22;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="balance-card">
+        <h2>💰 Balansingiz</h2>
+        <h1 id="score">0</h1>
+    </div>
+
+    <button id="btn-farm">BOSING!</button>
+
+    <div class="shop-container">
+        <h3>🛒 DO'KON (Skins)</h3>
+        <div class="shop-item">
+            <span>🛡️ Pahlavon (100 💰)</span>
+            <button class="buy-btn" onclick="sendToBot('buy_Pahlavon')">OLISH</button>
+        </div>
+        <div class="shop-item">
+            <span>⚡ Afsona (500 💰)</span>
+            <button class="buy-btn" onclick="sendToBot('buy_Afsona')">OLISH</button>
+        </div>
+        <div class="shop-item">
+            <span>🔥 Qirol (1000 💰)</span>
+            <button class="buy-btn" onclick="sendToBot('buy_Qirol')">OLISH</button>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let score = 0;
+        const scoreElement = document.getElementById('score');
+        const farmBtn = document.getElementById('btn-farm');
+
+        farmBtn.addEventListener('click', () => {
+            score += 10;
+            scoreElement.innerText = score;
+            tg.HapticFeedback.impactOccurred('medium');
+        });
+
+        // BOTGA MA'LUMOT YUBORISH FUNKSIYASI
+        function sendToBot(action) {
+            const data = {
+                action: action,
+                earned_points: score
+            };
+            tg.sendData(JSON.stringify(data)); // Ma'lumotni JSON qilib yuboradi
+        }
+    </script>
+</body>
+</html>
