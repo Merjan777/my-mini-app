@@ -6,15 +6,57 @@
     <title>Hay Day: FAM Farm Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; --white: #ffffff; }
+        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; --white: #ffffff; --wood: #8B4513; }
         body { background: var(--grass); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
         .header { width: 95%; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; border: 2px solid var(--gold); box-sizing: border-box; position: sticky; top: 0; z-index: 10; }
         .coin-box { color: var(--gold); font-weight: bold; font-size: 20px; }
 
-        .farm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 20px; padding-bottom: 200px; }
-        .animal-slot { background: var(--dirt); border: 4px solid #5d4037; border-radius: 18px; padding: 15px; text-align: center; position: relative; transition: 0.1s; }
+        .farm-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* 2 ustun */
+            gap: 12px; 
+            width: 100%; 
+            margin-top: 20px; 
+            padding-bottom: 200px; 
+        }
+
+        /* Binolar uchun alohida stil */
+        .building-slot {
+            background: var(--wood);
+            border: 4px solid #6c3a2a;
+            border-radius: 18px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px; /* Binolar uchun minimal balandlik */
+        }
+        .building-slot .icon { font-size: 45px; margin-bottom: 5px; }
+        .building-slot .label { font-size: 14px; font-weight: bold; color: white; }
+
+        /* Hayvonlar uchun avvalgi stil */
+        .animal-slot { 
+            background: var(--dirt); 
+            border: 4px solid #5d4037; 
+            border-radius: 18px; 
+            padding: 15px; 
+            text-align: center; 
+            position: relative; 
+            transition: 0.1s; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
+        }
         .animal-slot:active { transform: scale(0.95); }
+        .animal-slot .icon { font-size: 45px; }
+        .animal-slot .label { font-size: 12px; margin-top:5px; text-transform: uppercase;}
         
         .product-badge { position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; border: 2px solid white; animation: bounce 1s infinite; }
 
@@ -33,10 +75,11 @@
 
     <div class="header">
         <div class="coin-box">💰 <span id="balance">100</span> FAM</div>
-        <div id="warehouse-status">🥚:0 | 🧶:0</div>
+        <div id="warehouse-status">🥚:0 | 🧶:0 | 🥩:0</div>
     </div>
 
-    <div class="farm-grid" id="farm-grid"></div>
+    <div class="farm-grid" id="farm-grid">
+        </div>
 
     <div class="shop-menu">
         <div class="shop-item">
@@ -46,6 +89,10 @@
         <div class="shop-item">
             <span>🐑 Qo'y (150 FAM)</span>
             <button class="btn btn-buy" onclick="buyAnimal('sheep', 150)">SOTIB OLISH</button>
+        </div>
+        <div class="shop-item">
+            <span>🐄 Mol (500 FAM)</span>
+            <button class="btn btn-buy" onclick="buyAnimal('cow', 500)">SOTIB OLISH</button>
         </div>
         <button class="btn btn-sell" onclick="sellAll()">Hamma mahsulotni sotish</button>
         <button class="btn btn-save" onclick="saveGame()">💾 SAQLASH VA CHIQISH</button>
@@ -57,27 +104,31 @@
 
         let farmData = {
             balance: 100,
-            animals: [],
-            warehouse: { eggs: 0, wool: 0 }
+            animals: [], // {type: 'chicken', ready: false, lastProduced: Date.now()}
+            warehouse: { eggs: 0, wool: 0, meat: 0 },
+            buildings: { chicken_coop: 0, sheep_barn: 0, cow_shed: 0, house: 0 } // Binolar sonini kuzatish
         };
 
-        // 1. Ma'lumotlarni URL'dan yuklash (MUHIM QISM)
-        function initGame() {
+        // 1. Ma'lumotlarni URL'dan yuklash
+        window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const savedBalance = urlParams.get('b');
-            const savedInv = urlParams.get('i');
+            const savedInv = urlParams.get('i'); // C:5,S:2,W:1 (W=Cow, Meat)
+            const savedWare = urlParams.get('w'); // E:10,W:5,M:3
 
             if (savedBalance) {
                 farmData.balance = parseInt(savedBalance);
             }
 
             if (savedInv) {
-                // "C:5,S:1" formatini o'qib massivga aylantirish
-                const parts = savedInv.split(',');
-                parts.forEach(part => {
+                savedInv.split(',').forEach(part => {
                     if (part.includes(':')) {
-                        const [type, count] = part.split(':');
-                        const animalType = (type === 'C') ? 'chicken' : 'sheep';
+                        const [typeCode, count] = part.split(':');
+                        let animalType = '';
+                        if (typeCode === 'C') animalType = 'chicken';
+                        else if (typeCode === 'S') animalType = 'sheep';
+                        else if (typeCode === 'W') animalType = 'cow'; // 'W' for Cow
+                        
                         const num = parseInt(count);
                         for (let i = 0; i < num; i++) {
                             farmData.animals.push({ 
@@ -89,10 +140,30 @@
                     }
                 });
             }
+
+            if (savedWare) {
+                savedWare.split(',').forEach(part => {
+                    if (part.includes(':')) {
+                        const [prodCode, count] = part.split(':');
+                        const num = parseInt(count);
+                        if (prodCode === 'E') farmData.warehouse.eggs = num;
+                        else if (prodCode === 'W') farmData.warehouse.wool = num;
+                        else if (prodCode === 'M') farmData.warehouse.meat = num; // 'M' for Meat
+                    }
+                });
+            }
+
+            // Binolar sonini hisoblaymiz (har bir hayvon turiga bitta bino)
+            farmData.buildings.chicken_coop = farmData.animals.filter(a => a.type === 'chicken').length > 0 ? 1 : 0;
+            farmData.buildings.sheep_barn = farmData.animals.filter(a => a.type === 'sheep').length > 0 ? 1 : 0;
+            farmData.buildings.cow_shed = farmData.animals.filter(a => a.type === 'cow').length > 0 ? 1 : 0;
+            farmData.buildings.house = 1; // Uy har doim bor
+
             updateUI();
             renderFarm();
-        }
+        };
 
+        // 2. Hayvon sotib olish
         function buyAnimal(type, price) {
             if (farmData.balance >= price) {
                 farmData.balance -= price;
@@ -101,6 +172,13 @@
                     ready: false, 
                     lastProduced: Date.now() 
                 });
+
+                // Birinchi hayvon sotib olinganda tegishli binoni qo'shamiz
+                if (type === 'chicken' && farmData.buildings.chicken_coop === 0) farmData.buildings.chicken_coop = 1;
+                if (type === 'sheep' && farmData.buildings.sheep_barn === 0) farmData.buildings.sheep_barn = 1;
+                if (type === 'cow' && farmData.buildings.cow_shed === 0) farmData.buildings.cow_shed = 1;
+                if (farmData.buildings.house === 0) farmData.buildings.house = 1; // Agar uy bo'lmasa
+
                 renderFarm();
                 updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
@@ -109,16 +187,38 @@
             }
         }
 
+        // 3. Fermani chizish (Binolar va Hayvonlar)
         function renderFarm() {
             const grid = document.getElementById('farm-grid');
             grid.innerHTML = '';
+
+            // Avval binolarni chizamiz
+            if (farmData.buildings.house > 0) {
+                grid.innerHTML += `<div class="building-slot"><div class="icon">🏠</div><div class="label">UY</div></div>`;
+            }
+            if (farmData.buildings.chicken_coop > 0) {
+                grid.innerHTML += `<div class="building-slot"><div class="icon">🐔</div><div class="label">TOVUQXONA</div></div>`;
+            }
+            if (farmData.buildings.sheep_barn > 0) {
+                grid.innerHTML += `<div class="building-slot"><div class="icon">🐑</div><div class="label">QO'YXONA</div></div>`;
+            }
+            if (farmData.buildings.cow_shed > 0) {
+                grid.innerHTML += `<div class="building-slot"><div class="icon">🐄</div><div class="label">MOLXONA</div></div>`;
+            }
+            // ... boshqa binolar
+
+            // Keyin hayvonlarni chizamiz
             farmData.animals.forEach((animal, index) => {
                 const slot = document.createElement('div');
                 slot.className = 'animal-slot';
-                const icon = animal.type === 'chicken' ? '🐔' : '🐑';
+                let icon = '';
+                if (animal.type === 'chicken') icon = '🐔';
+                else if (animal.type === 'sheep') icon = '🐑';
+                else if (animal.type === 'cow') icon = '🐄';
+
                 slot.innerHTML = `
-                    <div style="font-size: 45px;">${icon}</div>
-                    <div style="font-size: 12px; margin-top:5px;">${animal.type.toUpperCase()}</div>
+                    <div class="icon">${icon}</div>
+                    <div class="label">${animal.type.toUpperCase()}</div>
                     <div id="badge-${index}" class="product-badge" style="display: ${animal.ready ? 'block' : 'none'}">!</div>
                 `;
                 slot.onclick = () => collectProduct(index);
@@ -126,9 +226,14 @@
             });
         }
 
+        // 4. Ishlab chiqarish Taymeri
         setInterval(() => {
             farmData.animals.forEach((animal, index) => {
-                let cooldown = animal.type === 'chicken' ? 15000 : 45000;
+                let cooldown = 0;
+                if (animal.type === 'chicken') cooldown = 15000; // Tovuq 15s
+                else if (animal.type === 'sheep') cooldown = 45000; // Qo'y 45s
+                else if (animal.type === 'cow') cooldown = 90000; // Mol 90s (1.5 min)
+
                 if (!animal.ready && (Date.now() - animal.lastProduced > cooldown)) {
                     animal.ready = true;
                     let badge = document.getElementById(`badge-${index}`);
@@ -137,24 +242,29 @@
             });
         }, 1000);
 
+        // 5. Mahsulot yig'ish
         function collectProduct(index) {
             let animal = farmData.animals[index];
             if (animal.ready) {
                 if (animal.type === 'chicken') farmData.warehouse.eggs++;
-                if (animal.type === 'sheep') farmData.warehouse.wool++;
+                else if (animal.type === 'sheep') farmData.warehouse.wool++;
+                else if (animal.type === 'cow') farmData.warehouse.meat++; // Mol go'sht beradi
+                
                 animal.ready = false;
                 animal.lastProduced = Date.now();
                 document.getElementById(`badge-${index}`).style.display = 'none';
+                
                 tg.HapticFeedback.notificationOccurred('success');
                 updateUI();
             }
         }
 
+        // 6. Sotish
         function sellAll() {
-            let profit = (farmData.warehouse.eggs * 2) + (farmData.warehouse.wool * 40);
+            let profit = (farmData.warehouse.eggs * 2) + (farmData.warehouse.wool * 40) + (farmData.warehouse.meat * 100);
             if (profit > 0) {
                 farmData.balance += profit;
-                farmData.warehouse = { eggs: 0, wool: 0 };
+                farmData.warehouse = { eggs: 0, wool: 0, meat: 0 };
                 updateUI();
                 tg.showAlert(`Bozorda hamma narsa sotildi! +${profit} FAM 💰`);
             } else {
@@ -164,26 +274,34 @@
 
         function updateUI() {
             document.getElementById('balance').innerText = Math.floor(farmData.balance);
-            document.getElementById('warehouse-status').innerText = `🥚:${farmData.warehouse.eggs} | 🧶:${farmData.warehouse.wool}`;
+            document.getElementById('warehouse-status').innerText = `🥚:${farmData.warehouse.eggs} | 🧶:${farmData.warehouse.wool} | 🥩:${farmData.warehouse.meat}`;
         }
 
+        // 7. Saqlash va Botga yuborish
         function saveGame() {
             let chickens = farmData.animals.filter(a => a.type === 'chicken').length;
             let sheeps = farmData.animals.filter(a => a.type === 'sheep').length;
-            let invString = `C:${chickens},S:${sheeps}`;
+            let cows = farmData.animals.filter(a => a.type === 'cow').length; // Mol soni
             
+            // Muhim: Inventory'ni "C:10,S:2,W:5" ko'rinishida yuboramiz
+            let invString = `C:${chickens},S:${sheeps},W:${cows}`; // 'W' for Cow
+            
+            // Mahsulotlarni ham "E:10,W:5,M:3" ko'rinishida yuboramiz
+            let wareString = `E:${farmData.warehouse.eggs},W:${farmData.warehouse.wool},M:${farmData.warehouse.meat}`; // 'M' for Meat
+
             const data = {
                 action: "update_farm",
                 balance: farmData.balance,
-                inventory: invString
+                inventory: invString,
+                warehouse: wareString // Yangi: ombor holatini ham yuboramiz
             };
             
             tg.sendData(JSON.stringify(data)); 
             setTimeout(() => { tg.close(); }, 100);
         }
 
-        // Yuklashni boshlash
-        initGame();
+        // Dastlabki yuklash
+        // initGame() endi window.onload bilan ishga tushadi
     </script>
 </body>
 </html>
