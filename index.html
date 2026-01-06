@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rich Farm Tycoon</title>
+    <title>Avto Ferma Tycoon</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --grass: linear-gradient(135deg, #7cfc00, #32cd32);
             --gold: #f1c40f;
             --wood: #5d4037;
+            --bar-bg: #ddd;
+            --bar-fill: #2ecc71;
         }
         body {
             margin: 0; padding: 10px;
@@ -17,7 +19,9 @@
             font-family: 'Segoe UI', Roboto, sans-serif;
             color: white; user-select: none;
             overflow-x: hidden;
+            padding-bottom: 220px; /* Shop uchun joy */
         }
+        /* Header */
         .header {
             background: rgba(0,0,0,0.8);
             border: 2px solid var(--gold);
@@ -28,67 +32,111 @@
             position: sticky; top: 0; z-index: 100;
         }
         .coin { font-size: 18px; font-weight: bold; color: var(--gold); }
-        .warehouse { font-size: 12px; text-align: right; }
+        .warehouse { font-size: 12px; text-align: right; line-height: 1.4; }
+
+        /* Farm Grid */
         .farm-grid {
             display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 10px; padding-bottom: 200px;
+            gap: 10px;
         }
         .card {
             background: #fdf5e6; border-radius: 15px;
-            padding: 15px 5px; text-align: center;
+            padding: 10px 5px; text-align: center;
             border: 3px solid var(--wood);
-            box-shadow: 0 4px 0 #3e2723; transition: 0.1s;
+            box-shadow: 0 4px 0 #3e2723;
+            position: relative;
         }
-        .card:active { transform: translateY(2px); box-shadow: 0 2px 0 #3e2723; }
-        .icon { font-size: 35px; margin-bottom: 5px; }
+        .icon { font-size: 30px; margin-bottom: 5px; }
+        
+        /* Progress Bar Styles */
+        .progress-container {
+            width: 80%;
+            height: 6px;
+            background-color: #bdc3c7;
+            border-radius: 3px;
+            margin: 5px auto;
+            overflow: hidden;
+            border: 1px solid #7f8c8d;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--bar-fill);
+            transition: width 0.1s linear;
+        }
+        .timer-text {
+            font-size: 10px; color: #3e2723; font-weight: bold;
+        }
+
+        /* Shop Styles */
         .shop {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: #3e2723; border-radius: 20px 20px 0 0;
             padding: 15px; box-sizing: border-box;
             border-top: 4px solid var(--gold); z-index: 1000;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
         }
         .shop-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
         .btn {
             border: none; padding: 10px 5px; border-radius: 10px;
-            font-weight: bold; font-size: 12px; cursor: pointer;
+            font-weight: bold; font-size: 11px; cursor: pointer;
         }
-        .buy { background: #2ecc71; color: white; }
-        .sell { background: var(--gold); color: #3e2723; width: 100%; font-size: 16px; }
-        .stars { background: #3498db; color: white; width: 100%; margin-bottom: 8px; }
+        .buy { background: #2ecc71; color: white; border-bottom: 3px solid #27ae60; }
+        .buy:active { transform: translateY(2px); border-bottom: 1px solid; }
+        .sell { background: var(--gold); color: #3e2723; width: 100%; font-size: 16px; margin-bottom: 8px; }
         .save { background: #e67e22; color: white; width: 100%; margin-bottom: 8px; }
+
+        /* Animatsiyalar */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .pop-anim { animation: pop 0.2s ease; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="coin">💰 <span id="balance">0</span></div>
-        <div class="warehouse" id="warehouse">🥚0 | 🧶0 | 🥩0</div>
+        <div class="warehouse" id="warehouse">🥚0<br>🧶0<br>🥩0</div>
     </div>
 
     <div class="farm-grid" id="farm"></div>
 
     <div class="shop">
         <div class="shop-row">
-            <button class="btn buy" onclick="buyAnimal('chicken', 10)">🐔 10</button>
-            <button class="btn buy" onclick="buyAnimal('sheep', 150)">🐑 150</button>
-            <button class="btn buy" onclick="buyAnimal('cow', 500)">🐄 500</button>
+            <button class="btn buy" onclick="buyAnimal('chicken', 10)">🐔 10 FAM<br><small>3 sek</small></button>
+            <button class="btn buy" onclick="buyAnimal('sheep', 150)">🐑 150 FAM<br><small>5 sek</small></button>
+            <button class="btn buy" onclick="buyAnimal('cow', 500)">🐄 500 FAM<br><small>8 sek</small></button>
         </div>
-        <button class="btn save" onclick="saveGame()">💾 SAQLASH</button>
-        <button class="btn stars" onclick="buyStars()">⭐ 1000 FAM (50 XTR)</button>
         <button class="btn sell" onclick="sellAll()">HOSILNI SOTISH 💰</button>
+        <button class="btn save" onclick="saveGame()">SAQLASH 💾</button>
     </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// URL parametrlardan ma'lumotlarni olish
+// URL dan ma'lumotlarni o'qish
 const urlParams = new URLSearchParams(window.location.search);
+
+// O'yin sozlamalari (Sekundlarda)
+const PRODUCTION_TIME = {
+    chicken: 3, // 3 sekundda 1 tuxum
+    sheep: 5,   // 5 sekundda 1 jun
+    cow: 8      // 8 sekundda 1 sut
+};
+
 let game = {
-    balance: parseInt(urlParams.get('b')) || 100,
+    // AGAR URL DA PUL KELMASA, 10 FAM BILAN BOSHLANADI
+    balance: parseInt(urlParams.get('b')) || 10,
     inventory: parseInventory(urlParams.get('i')),
     warehouse: parseWarehouse(urlParams.get('w'))
 };
+
+// Har bir hayvonning shaxsiy taymeri
+let animalTimers = [];
 
 function parseInventory(str) {
     if (!str) return {};
@@ -103,31 +151,102 @@ function parseInventory(str) {
 function parseWarehouse(str) {
     if (!str) return {eggs: 0, wool: 0, meat: 0};
     let parts = str.split(',');
-    return {
-        eggs: parseInt(parts[0].split(':')[1]) || 0,
-        wool: parseInt(parts[1].split(':')[1]) || 0,
-        meat: parseInt(parts[2].split(':')[1]) || 0
-    };
+    let wh = {eggs: 0, wool: 0, meat: 0};
+    parts.forEach(p => {
+        if(p.includes(':')) {
+            let [k, v] = p.split(':');
+            if(k === 'E' || k === 'eggs') wh.eggs = parseInt(v);
+            if(k === 'W' || k === 'wool') wh.wool = parseInt(v);
+            if(k === 'M' || k === 'meat') wh.meat = parseInt(v);
+        }
+    });
+    return wh;
 }
 
 function updateUI() {
-    document.getElementById("balance").innerText = game.balance;
-    document.getElementById("warehouse").innerText = 
-        `🥚${game.warehouse.eggs} | 🧶${game.warehouse.wool} | 🥩${game.warehouse.meat}`;
+    document.getElementById("balance").innerText = Math.floor(game.balance);
+    document.getElementById("warehouse").innerHTML = 
+        `🥚 ${game.warehouse.eggs}<br>🧶 ${game.warehouse.wool}<br>🥩 ${game.warehouse.meat}`;
 }
 
+// Fermani chizish va taymerlarni boshlash
 function renderFarm() {
     const farm = document.getElementById("farm");
     farm.innerHTML = "";
+    animalTimers = []; // Taymerlarni tozalash
+
     for (const type in game.inventory) {
         for (let i = 0; i < game.inventory[type]; i++) {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.innerHTML = `<div class="icon">${type==='chicken'?'🐔':type==='sheep'?'🐑':'🐄'}</div><div style="font-size:10px">YIG'ISH</div>`;
-            card.onclick = () => collect(type);
-            farm.appendChild(card);
+            createAnimalCard(type, i);
         }
     }
+}
+
+function createAnimalCard(type, index) {
+    const farm = document.getElementById("farm");
+    const card = document.createElement("div");
+    card.className = "card";
+    
+    // Har bir hayvonga unikal ID beramiz
+    const barId = `bar-${type}-${index}`;
+    
+    card.innerHTML = `
+        <div class="icon">${getIcon(type)}</div>
+        <div class="progress-container">
+            <div class="progress-fill" id="${barId}"></div>
+        </div>
+        <div class="timer-text">${PRODUCTION_TIME[type]}s</div>
+    `;
+    
+    farm.appendChild(card);
+
+    // Taymer obyektini yaratish (har bir hayvon uchun alohida)
+    animalTimers.push({
+        id: barId,
+        type: type,
+        progress: Math.random() * 100, // O'yin boshlanganda har xil joydan boshlanishi uchun
+        speed: 100 / (PRODUCTION_TIME[type] * 10) // 100ms da qancha % yurishi
+    });
+}
+
+function getIcon(type) {
+    if (type === 'chicken') return '🐔';
+    if (type === 'sheep') return '🐑';
+    return '🐄';
+}
+
+// O'YIN TIKT (Game Loop) - Asosiy yurak urishi
+setInterval(() => {
+    animalTimers.forEach(animal => {
+        // Progressni oshirish
+        animal.progress += animal.speed;
+
+        // Agar 100% bo'lsa
+        if (animal.progress >= 100) {
+            animal.progress = 0; // 0 ga qaytarish
+            produceItem(animal.type); // Mahsulot qo'shish
+            
+            // Animatsiya effekti
+            const bar = document.getElementById(animal.id);
+            if(bar) {
+                bar.parentElement.parentElement.classList.add('pop-anim');
+                setTimeout(() => bar.parentElement.parentElement.classList.remove('pop-anim'), 200);
+            }
+        }
+
+        // Grafikani yangilash
+        const barElement = document.getElementById(animal.id);
+        if (barElement) {
+            barElement.style.width = animal.progress + "%";
+        }
+    });
+}, 100); // Har 0.1 sekundda ishlaydi
+
+function produceItem(type) {
+    if (type === 'chicken') game.warehouse.eggs++;
+    else if (type === 'sheep') game.warehouse.wool++;
+    else if (type === 'cow') game.warehouse.meat++;
+    updateUI();
 }
 
 function buyAnimal(type, price) {
@@ -135,19 +254,14 @@ function buyAnimal(type, price) {
         game.balance -= price;
         game.inventory[type] = (game.inventory[type] || 0) + 1;
         updateUI();
-        renderFarm();
+        
+        // Yangi hayvonni fermaga qo'shish (to'liq render qilmasdan)
+        createAnimalCard(type, (game.inventory[type] - 1));
+        
         tg.HapticFeedback.impactOccurred('medium');
     } else {
         tg.showAlert("Mablag' yetarli emas!");
     }
-}
-
-function collect(type) {
-    if (type === 'chicken') game.warehouse.eggs++;
-    else if (type === 'sheep') game.warehouse.wool++;
-    else if (type === 'cow') game.warehouse.meat++;
-    updateUI();
-    tg.HapticFeedback.notificationOccurred('success');
 }
 
 function sellAll() {
@@ -156,12 +270,16 @@ function sellAll() {
         game.balance += income;
         game.warehouse = {eggs: 0, wool: 0, meat: 0};
         updateUI();
-        tg.showAlert(`Sotildi! Daromad: ${income} FAM`);
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showAlert(`Sotildi! +${income} FAM`);
+    } else {
+        tg.showAlert("Sotish uchun mahsulot yo'q!");
     }
 }
 
 function saveGame() {
     let invStr = Object.entries(game.inventory).map(([k,v]) => `${k}:${v}`).join(',');
+    // Server formatiga to'g'irlash (E:0, W:0...)
     let warStr = `E:${game.warehouse.eggs},W:${game.warehouse.wool},M:${game.warehouse.meat}`;
     
     tg.sendData(JSON.stringify({
@@ -169,15 +287,12 @@ function saveGame() {
         inventory: invStr,
         warehouse: warStr
     }));
-    // sendData ishlatilganda ilova yopiladi
 }
 
-function buyStars() {
-    tg.sendData(JSON.stringify({ action: "stars_purchase" }));
-}
-
+// Boshlanish
 updateUI();
 renderFarm();
+
 </script>
 </body>
 </html>
