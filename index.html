@@ -3,42 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hay Day: FAM Farm Premium</title>
+    <title>Hay Day: FAM Farm v2.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; --white: #ffffff; --wood: #8B4513; --stars: #3498db; }
-        body { background: var(--grass); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        .header { width: 95%; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; border: 2px solid var(--gold); box-sizing: border-box; position: sticky; top: 0; z-index: 10; }
-        .farm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 20px; padding-bottom: 250px; }
-        .building-slot { background: var(--wood); border: 4px solid #6c3a2a; border-radius: 18px; padding: 15px; text-align: center; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .animal-slot { background: var(--dirt); border: 4px solid #5d4037; border-radius: 18px; padding: 15px; text-align: center; position: relative; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .product-badge { position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; border: 2px solid white; animation: bounce 1s infinite; }
+        :root { 
+            --grass: linear-gradient(135deg, #7cfc00, #32cd32);
+            --dirt: #8d6e63; --gold: #f1c40f; --wood: #5d4037; --white: #ffffff; 
+        }
+        body { 
+            background: var(--grass); color: white; font-family: 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; overflow-x: hidden; user-select: none;
+        }
+
+        /* Premium Header */
+        .header { 
+            width: 95%; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 20px; 
+            display: flex; justify-content: space-between; border: 3px solid var(--gold); 
+            box-sizing: border-box; position: sticky; top: 5px; z-index: 100;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .coin-display { font-size: 20px; font-weight: bold; color: var(--gold); display: flex; align-items: center; gap: 5px; }
+
+        /* Farm Grid & Cards */
+        .farm-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
+            width: 100%; margin-top: 25px; padding-bottom: 260px; 
+        }
+        .card { 
+            background: #fdf5e6; border-radius: 25px; padding: 15px; text-align: center; 
+            position: relative; border: 4px solid var(--wood); color: #3e2723;
+            box-shadow: 0 6px 0 #3e2723; transition: 0.1s;
+        }
+        .card:active { transform: translateY(3px); box-shadow: 0 3px 0 #3e2723; }
+        .card .icon { font-size: 50px; }
+
+        /* UX: Progress Bar */
+        .progress-box { 
+            width: 100%; height: 10px; background: #d7ccc8; border-radius: 10px; 
+            margin-top: 10px; overflow: hidden; border: 1px solid #5d4037; 
+        }
+        .progress-fill { 
+            height: 100%; background: #4caf50; width: 0%; 
+            transition: width 1s linear; 
+        }
+
+        /* Product Notification */
+        .product-badge { 
+            position: absolute; top: -10px; right: -10px; background: #e74c3c; 
+            color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; 
+            border: 2px solid white; animation: bounce 1s infinite; display: none;
+        }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        .shop-menu { position: fixed; bottom: 0; width: 100%; background: #3e2723; border-radius: 25px 25px 0 0; padding: 15px; border-top: 4px solid var(--gold); z-index: 10; box-sizing: border-box; }
-        .shop-row { display: flex; gap: 5px; margin-bottom: 5px; }
-        .btn { width: 100%; padding: 10px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-stars { background: var(--stars); color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+        /* Styled Shop Menu */
+        .shop-menu { 
+            position: fixed; bottom: 0; width: 100%; background: #3e2723; 
+            border-radius: 30px 30px 0 0; padding: 20px; box-sizing: border-box; 
+            border-top: 5px solid var(--gold); z-index: 10;
+        }
+        .shop-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .btn { 
+            border: none; padding: 12px; border-radius: 12px; font-weight: bold; 
+            cursor: pointer; font-size: 14px; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .btn-buy { background: #2ecc71; color: white; }
+        .btn-stars { background: #3498db; color: white; width: 100%; margin-bottom: 10px; font-size: 16px; }
+        .btn-action { background: var(--gold); color: #3e2723; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="color: var(--gold); font-weight: bold;">💰 <span id="balance">100</span> FAM</div>
-        <div id="warehouse-status">🥚:0|🧶:0|🥩:0</div>
+        <div class="coin-display">💰 <span id="balance">100</span></div>
+        <div id="warehouse-status" style="font-size: 14px;">🥚:0 | 🧶:0 | 🥩:0</div>
     </div>
 
     <div class="farm-grid" id="farm-grid"></div>
 
     <div class="shop-menu">
         <div class="shop-row">
-            <button class="btn" style="background: #2ecc71; color: white;" onclick="buyAnimal('chicken', 10)">🐔 Tovuq</button>
-            <button class="btn" style="background: #3498db; color: white;" onclick="buyAnimal('sheep', 150)">🐑 Qo'y</button>
-            <button class="btn" style="background: #e67e22; color: white;" onclick="buyAnimal('cow', 500)">🐄 Mol</button>
+            <button class="btn btn-buy" onclick="buyAnimal('chicken', 10)">🐔 10</button>
+            <button class="btn btn-buy" onclick="buyAnimal('sheep', 150)">🐑 150</button>
+            <button class="btn btn-buy" onclick="buyAnimal('cow', 500)">🐄 500</button>
         </div>
-        <button class="btn btn-stars" onclick="buyWithStars()">⭐ 1000 FAM SOTIB OLISH (50 Stars)</button>
-        <div class="shop-row" style="margin-top: 5px;">
-            <button class="btn" style="background: var(--gold);" onclick="sellAll()">SOTISH 💰</button>
-            <button class="btn" style="background: #e74c3c; color: white;" onclick="saveGame()">💾 SAQLASH</button>
+        <button class="btn btn-stars" onclick="buyWithStars()">⭐ 1000 FAM SOTIB OLISH</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn btn-action" onclick="sellAll()">SOTISH 💰</button>
+            <button class="btn btn-action" style="background: #e74c3c; color: white;" onclick="saveGame()">💾 SAQLASH</button>
         </div>
     </div>
 
@@ -70,41 +122,43 @@
             updateUI(); renderFarm();
         };
 
-        function buyWithStars() {
-            // Botga to'lov invoice yuborishi uchun so'rov jo'natamiz
-            tg.sendData(JSON.stringify({action: "stars_purchase", amount: 1000}));
-            tg.close(); // To'lov xabari ko'rinishi uchun yopiladi
-        }
-
         function buyAnimal(type, price) {
             if (farmData.balance >= price) {
                 farmData.balance -= price;
                 farmData.animals.push({ type: type, ready: false, last: Date.now() });
-                updateUI(); renderFarm(); tg.HapticFeedback.impactOccurred('medium');
+                updateUI(); renderFarm(); 
+                tg.HapticFeedback.impactOccurred('medium');
             } else { tg.showAlert("Mablag' yetarli emas!"); }
         }
 
         function renderFarm() {
             const grid = document.getElementById('farm-grid');
-            grid.innerHTML = '<div class="building-slot"><div style="font-size:45px">🏠</div><b>UY</b></div>';
-            if(farmData.animals.some(a=>a.type==='chicken')) grid.innerHTML += '<div class="building-slot">🐔<b>TOVUQXONA</b></div>';
-            if(farmData.animals.some(a=>a.type==='sheep')) grid.innerHTML += '<div class="building-slot">🐑<b>QO\'YXONA</b></div>';
-            if(farmData.animals.some(a=>a.type==='cow')) grid.innerHTML += '<div class="building-slot">🐄<b>MOLXONA</b></div>';
-            
+            grid.innerHTML = '';
             farmData.animals.forEach((a, i) => {
-                const div = document.createElement('div');
-                div.className = 'animal-slot';
+                const card = document.createElement('div');
+                card.className = 'card';
                 let icon = a.type==='chicken'?'🐔':a.type==='sheep'?'🐑':'🐄';
-                div.innerHTML = `<div style="font-size:45px">${icon}</div><div id="badge-${i}" class="product-badge" style="display:${a.ready?'block':'none'}">!</div>`;
-                div.onclick = () => collect(i);
-                grid.appendChild(div);
+                card.innerHTML = `
+                    <div class="icon">${icon}</div>
+                    <div class="progress-box"><div id="p-${i}" class="progress-fill"></div></div>
+                    <div id="badge-${i}" class="product-badge">!</div>
+                `;
+                card.onclick = () => collect(i);
+                grid.appendChild(card);
             });
         }
 
+        // UX: Progress Barni yangilab boruvchi taymer
         setInterval(() => {
             farmData.animals.forEach((a, i) => {
                 let cooldown = a.type==='chicken'?15000:a.type==='sheep'?45000:90000;
-                if(!a.ready && Date.now()-a.last > cooldown) {
+                let elapsed = Date.now() - a.last;
+                let percent = Math.min((elapsed / cooldown) * 100, 100);
+                
+                let fill = document.getElementById(`p-${i}`);
+                if(fill) fill.style.width = percent + "%";
+
+                if(!a.ready && elapsed >= cooldown) {
                     a.ready = true;
                     let b = document.getElementById(`badge-${i}`);
                     if(b) b.style.display = 'block';
@@ -130,12 +184,18 @@
                 farmData.balance += profit;
                 farmData.warehouse = {eggs:0, wool:0, meat:0};
                 updateUI(); tg.showAlert(`Sotildi: +${profit} FAM 💰`);
+                tg.HapticFeedback.impactOccurred('heavy');
             }
         }
 
         function updateUI() {
             document.getElementById('balance').innerText = Math.floor(farmData.balance);
             document.getElementById('warehouse-status').innerText = `🥚:${farmData.warehouse.eggs}|🧶:${farmData.warehouse.wool}|🥩:${farmData.warehouse.meat}`;
+        }
+
+        function buyWithStars() {
+            tg.sendData(JSON.stringify({action: "stars_purchase", amount: 1000}));
+            tg.close();
         }
 
         function saveGame() {
