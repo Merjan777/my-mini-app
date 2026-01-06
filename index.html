@@ -3,167 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Skin Tycoon</title>
+    <title>Haqiqiy Ferma</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --primary-bg: #0f0c29;
-            --gradient: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
-            --gold: #f1c40f;
-            --accent: #e94560;
-        }
-
-        body {
-            background: var(--gradient);
-            color: white;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            user-select: none;
-        }
-
-        .header {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .balance-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            margin-top: 10px;
-        }
-
-        #balance {
-            font-size: 42px;
-            font-weight: bold;
-            color: var(--gold);
-            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
-            margin: 0;
-        }
-
-        .clicker-section {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #farm-btn {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 8px solid rgba(255, 255, 255, 0.1);
-            background: url('https://cdn-icons-png.flaticon.com/512/217/217853.png') center/cover; /* Tilla tanga rasmi */
-            background-color: var(--gold);
-            cursor: pointer;
-            transition: transform 0.1s active;
-            box-shadow: 0 0 50px rgba(241, 196, 15, 0.3);
-        }
-
-        #farm-btn:active {
-            transform: scale(0.92);
-        }
-
-        .shop-drawer {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(15px);
-            border-top: 2px solid var(--gold);
-            border-radius: 30px 30px 0 0;
-            padding: 20px;
-            box-sizing: border-box;
-            max-height: 40%;
-            overflow-y: auto;
-        }
-
-        .shop-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            margin: 8px 0;
-            padding: 12px 20px;
-            border-radius: 15px;
-            transition: background 0.3s;
-        }
-
-        .item-info h4 { margin: 0; font-size: 16px; }
-        .item-info p { margin: 0; font-size: 12px; color: #ccc; }
-
-        .buy-btn {
-            background: var(--accent);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        :root { --gold: #f1c40f; --green: #2ecc71; --brown: #8d6e63; --red: #e74c3c; }
+        body { background: #2d5a27; color: white; font-family: sans-serif; margin: 0; padding: 15px; text-align: center; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .card { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+        .animal-box { background: #3e2723; margin: 10px 0; padding: 15px; border-radius: 15px; border-left: 5px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
+        .btn { border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
+        .buy-btn { background: var(--green); }
+        .sell-btn { background: var(--gold); color: black; margin-left: 5px; }
+        #balance { font-size: 24px; color: var(--gold); font-weight: bold; }
     </style>
 </head>
 <body>
+    <h2>🚜 MENING FERMAM</h2>
+    
+    <div class="stat-grid">
+        <div class="card">💰 Balans: <br><span id="balance">100</span> FAM</div>
+        <div class="card">📦 Ombor: <br><span id="storage">Bo'sh</span></div>
+    </div>
 
-    <div class="header">
-        <h3 style="margin:0; opacity: 0.8;">GOLDEN SKIN TYCOON</h3>
-        <div class="balance-container">
-            <h1 id="balance">0</h1>
-            <span style="font-size: 12px; color: #aaa;">JAMI TANGALAR</span>
+    <div class="animal-box">
+        <div style="text-align: left;">
+            <b>🐔 Tovuqlar: <span id="chickens">0</span> ta</b><br>
+            <small>Narxi: 10 FAM | Tuxum: 1 FAM</small>
+        </div>
+        <div>
+            <button class="btn buy-btn" onclick="buy('chicken', 10)">+1</button>
+            <button class="btn sell-btn" onclick="sell('egg')">Tuxum Sotish</button>
         </div>
     </div>
 
-    <div class="clicker-section">
-        <button id="farm-btn" onclick="farm()"></button>
-    </div>
-
-    <div class="shop-drawer">
-        <h3 style="text-align: center; margin-top: 0; color: var(--gold);">🛒 SKINLAR DO'KONI</h3>
-        
-        <div class="shop-item">
-            <div class="item-info">
-                <h4>🛡️ Pahlavon Skin</h4>
-                <p>Narxi: 100 tanga</p>
-            </div>
-            <button class="buy-btn" onclick="sendData('buy_Pahlavon')">OLISH</button>
+    <div class="animal-box" style="border-left-color: #ecf0f1;">
+        <div style="text-align: left;">
+            <b>🐑 Qo'ylar: <span id="sheeps">0</span> ta</b><br>
+            <small>Narxi: 150 FAM | Jun: 20 FAM</small>
         </div>
-
-        <div class="shop-item">
-            <div class="item-info">
-                <h4>⚡ Afsona Skin</h4>
-                <p>Narxi: 500 tanga</p>
-            </div>
-            <button class="buy-btn" onclick="sendData('buy_Afsona')">OLISH</button>
+        <div>
+            <button class="btn buy-btn" onclick="buy('sheep', 150)">+1</button>
+            <button class="btn sell-btn" onclick="sell('wool')">Jun Sotish</button>
         </div>
     </div>
+
+    <div class="animal-box" style="border-left-color: #795548;">
+        <div style="text-align: left;">
+            <b>🐄 Mollar: <span id="cows">0</span> ta</b><br>
+            <small>Narxi: 500 FAM | Sut: 70 FAM</small>
+        </div>
+        <div>
+            <button class="btn buy-btn" onclick="buy('cow', 500)">+1</button>
+            <button class="btn sell-btn" onclick="sell('milk')">Sut Sotish</button>
+        </div>
+    </div>
+
+    <button onclick="saveAndExit()" style="width: 100%; padding: 15px; background: var(--red); border: none; border-radius: 10px; color: white; font-weight: bold; margin-top: 20px;">💾 SAQLASH VA CHIQISH</button>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        tg.headerColor = '#0f0c29';
 
-        let score = 0;
-        function farm() {
-            score += 10;
-            document.getElementById('balance').innerText = score.toLocaleString();
-            tg.HapticFeedback.impactOccurred('medium');
+        let farm = {
+            balance: 100,
+            chickens: 0, sheeps: 0, cows: 0,
+            eggs: 0, wool: 0, milk: 0
+        };
+
+        // Daromad ishlab chiqarish (har 5 soniyada)
+        setInterval(() => {
+            farm.eggs += farm.chickens * 1;
+            farm.wool += farm.sheeps * 1;
+            farm.milk += farm.cows * 1;
+            updateUI();
+        }, 5000);
+
+        function buy(type, price) {
+            if (farm.balance >= price) {
+                farm.balance -= price;
+                if(type == 'chicken') farm.chickens++;
+                if(type == 'sheep') farm.sheeps++;
+                if(type == 'cow') farm.cows++;
+                updateUI();
+                tg.HapticFeedback.impactOccurred('medium');
+            } else {
+                tg.showAlert("Mablag' yetarli emas!");
+            }
         }
 
-        function sendData(action) {
-            // Botga yuborishdan oldin so'rovni tasdiqlaymiz
-            tg.showConfirm(`Siz haqiqatdan ham ushbu skinni olmoqchimisiz?`, (ok) => {
-                if (ok) {
-                    const data = { action: action, earned_points: score };
-                    tg.sendData(JSON.stringify(data));
-                }
-            });
+        function sell(product) {
+            let profit = 0;
+            if(product == 'egg') { profit = farm.eggs * 1; farm.eggs = 0; }
+            if(product == 'wool') { profit = farm.wool * 20; farm.wool = 0; }
+            if(product == 'milk') { profit = farm.milk * 70; farm.milk = 0; }
+            
+            if(profit > 0) {
+                farm.balance += profit;
+                updateUI();
+                tg.showAlert(`Sotildi! +${profit} FAM ishlandingiz.`);
+            } else {
+                tg.showAlert("Sotishga mahsulot yo'q!");
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = farm.balance;
+            document.getElementById('chickens').innerText = farm.chickens;
+            document.getElementById('sheeps').innerText = farm.sheeps;
+            document.getElementById('cows').innerText = farm.cows;
+            document.getElementById('storage').innerText = `${farm.eggs}🥚, ${farm.wool}🧶, ${farm.milk}🥛`;
+        }
+
+        function saveAndExit() {
+            tg.sendData(JSON.stringify({
+                action: "update_farm",
+                balance: farm.balance,
+                inventory: `C:${farm.chickens},S:${farm.sheeps},M:${farm.cows}`
+            }));
         }
     </script>
 </body>
