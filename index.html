@@ -3,41 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hay Day Clone: FAM Farm</title>
+    <title>Hay Day: FAM Farm</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; }
-        body { background: var(--grass); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; --white: #ffffff; }
+        body { background: var(--grass); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        .header { width: 95%; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 15px; display: flex; justify-content: space-between; border: 2px solid var(--gold); }
-        .coin-box { color: var(--gold); font-weight: bold; font-size: 18px; }
+        .header { width: 95%; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; border: 2px solid var(--gold); box-sizing: border-box; }
+        .coin-box { color: var(--gold); font-weight: bold; font-size: 20px; text-shadow: 1px 1px 2px black; }
 
-        .farm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 20px; }
-        .animal-slot { background: var(--dirt); border: 3px solid #5d4037; border-radius: 15px; padding: 10px; text-align: center; position: relative; }
+        .farm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 20px; padding-bottom: 160px; }
+        .animal-slot { background: var(--dirt); border: 4px solid #5d4037; border-radius: 18px; padding: 15px; text-align: center; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
         
-        .animal-img { width: 60px; height: 60px; margin-bottom: 5px; }
-        .product-badge { position: absolute; top: -5px; right: -5px; background: #e74c3c; padding: 5px 10px; border-radius: 50%; font-size: 12px; display: none; }
+        .product-badge { position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; border: 2px solid white; animation: bounce 1s infinite; }
 
-        .shop-menu { width: 100%; background: #3e2723; border-radius: 20px 20px 0 0; padding: 15px; margin-top: auto; box-sizing: border-box; }
-        .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); margin-bottom: 8px; padding: 8px 15px; border-radius: 10px; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        .shop-menu { position: fixed; bottom: 0; width: 100%; background: #3e2723; border-radius: 25px 25px 0 0; padding: 15px; box-sizing: border-box; border-top: 4px solid var(--gold); }
+        .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); margin-bottom: 10px; padding: 10px 15px; border-radius: 12px; }
         
-        .btn { border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn { border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-buy { background: #2ecc71; color: white; }
-        .btn-sell { background: var(--gold); color: black; width: 100%; margin-top: 10px; }
+        .btn-buy:active { transform: scale(0.9); }
+        .btn-sell { background: var(--gold); color: black; width: 100%; margin-top: 5px; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="coin-box">💰 <span id="balance">100</span> FAM</div>
-        <div>🚜 Ferma Darajasi: 1</div>
+        <div id="warehouse-status">🥚:0 | 🧶:0</div>
     </div>
 
-    <div class="farm-grid" id="farm-grid">
-        </div>
+    <div class="farm-grid" id="farm-grid"></div>
 
     <div class="shop-menu">
-        <h3 style="margin: 0 0 10px 0; color: var(--gold); text-align: center;">🛒 BOZOR</h3>
         <div class="shop-item">
             <span>🐔 Tovuq (10 FAM)</span>
             <button class="btn btn-buy" onclick="buyAnimal('chicken', 10)">SOTIB OLISH</button>
@@ -46,95 +46,122 @@
             <span>🐑 Qo'y (150 FAM)</span>
             <button class="btn btn-buy" onclick="buyAnimal('sheep', 150)">SOTIB OLISH</button>
         </div>
-        <button class="btn btn-sell" onclick="sellAll()">Hamma mahsulotni sotish 🥚🧶🥛</button>
-        <button class="btn" onclick="saveGame()" style="width: 100%; margin-top: 5px; background: #e74c3c; color: white;">💾 SAQLASH</button>
+        <button class="btn btn-sell" onclick="sellAll()">Hamma mahsulotni sotish</button>
+        <button class="btn" onclick="saveGame()" style="width: 100%; margin-top: 8px; background: #e74c3c; color: white;">💾 SAQLASH VA CHIQISH</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
+        // O'yin ma'lumotlari (Boshlang'ich holat)
         let farmData = {
             balance: 100,
             animals: [],
-            warehouse: { eggs: 0, wool: 0, milk: 0 }
+            warehouse: { eggs: 0, wool: 0 }
         };
 
+        // 1. Hayvon sotib olish
         function buyAnimal(type, price) {
             if (farmData.balance >= price) {
                 farmData.balance -= price;
-                farmData.animals.push({ type: type, ready: false, lastProduced: Date.now() });
+                farmData.animals.push({ 
+                    type: type, 
+                    ready: false, 
+                    lastProduced: Date.now() 
+                });
                 renderFarm();
                 updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
             } else {
-                tg.showAlert("Mablag' yetarli emas!");
+                tg.showAlert("Mablag' yetarli emas! ❌");
             }
         }
 
+        // 2. Fermani chizish
         function renderFarm() {
             const grid = document.getElementById('farm-grid');
             grid.innerHTML = '';
             farmData.animals.forEach((animal, index) => {
                 const slot = document.createElement('div');
                 slot.className = 'animal-slot';
-                const icon = animal.type === 'chicken' ? '🐔' : (animal.type === 'sheep' ? '🐑' : '🐄');
+                const icon = animal.type === 'chicken' ? '🐔' : '🐑';
                 slot.innerHTML = `
-                    <div style="font-size: 40px;">${icon}</div>
-                    <div style="font-size: 10px;">${animal.type.toUpperCase()}</div>
-                    <div id="badge-${index}" class="product-badge">!</div>
+                    <div style="font-size: 45px;">${icon}</div>
+                    <div style="font-size: 12px; margin-top:5px;">${animal.type.toUpperCase()}</div>
+                    <div id="badge-${index}" class="product-badge" style="display: ${animal.ready ? 'block' : 'none'}">!</div>
                 `;
                 slot.onclick = () => collectProduct(index);
                 grid.appendChild(slot);
             });
         }
 
-        // Mahsulot tayyor bo'lishini tekshirish (Hay Day kabi vaqtli)
+        // 3. Mahsulot tayyor bo'lishini tekshirish (Real vaqtda)
         setInterval(() => {
             farmData.animals.forEach((animal, index) => {
-                let cooldown = animal.type === 'chicken' ? 10000 : 30000; // Tovuq 10sek, Qo'y 30sek
+                let cooldown = animal.type === 'chicken' ? 10000 : 30000; // Tovuq 10s, Qo'y 30s
                 if (!animal.ready && (Date.now() - animal.lastProduced > cooldown)) {
                     animal.ready = true;
-                    document.getElementById(`badge-${index}`).style.display = 'block';
+                    let badge = document.getElementById(`badge-${index}`);
+                    if(badge) badge.style.display = 'block';
                 }
             });
         }, 1000);
 
+        // 4. Mahsulotni yig'ish
         function collectProduct(index) {
             let animal = farmData.animals[index];
             if (animal.ready) {
                 if (animal.type === 'chicken') farmData.warehouse.eggs++;
                 if (animal.type === 'sheep') farmData.warehouse.wool++;
+                
                 animal.ready = false;
                 animal.lastProduced = Date.now();
                 document.getElementById(`badge-${index}`).style.display = 'none';
+                
                 tg.HapticFeedback.notificationOccurred('success');
                 updateUI();
             }
         }
 
+        // 5. Bozorda sotish
         function sellAll() {
-            let profit = (farmData.warehouse.eggs * 1) + (farmData.warehouse.wool * 25);
+            let profit = (farmData.warehouse.eggs * 2) + (farmData.warehouse.wool * 30);
             if (profit > 0) {
                 farmData.balance += profit;
-                farmData.warehouse = { eggs: 0, wool: 0, milk: 0 };
+                farmData.warehouse = { eggs: 0, wool: 0 };
                 updateUI();
-                tg.showAlert(`Bozorda hamma narsa sotildi! +${profit} FAM ishlandingiz.`);
+                tg.showAlert(`Bozorda mahsulotlar sotildi! 💰 +${profit} FAM`);
+            } else {
+                tg.showAlert("Sotishga mahsulot yo'q! 🥚?");
             }
         }
 
         function updateUI() {
             document.getElementById('balance').innerText = farmData.balance;
+            document.getElementById('warehouse-status').innerText = `🥚:${farmData.warehouse.eggs} | 🧶:${farmData.warehouse.wool}`;
         }
 
+        // 6. Botga saqlash (Muhim!)
         function saveGame() {
-            let invString = `C:${farmData.animals.filter(a => a.type === 'chicken').length},S:${farmData.animals.filter(a => a.type === 'sheep').length}`;
+            // Hayvonlarni formatlash C:10,S:2 ko'rinishida
+            let chickens = farmData.animals.filter(a => a.type === 'chicken').length;
+            let sheeps = farmData.animals.filter(a => a.type === 'sheep').length;
+            let invString = `C:${chickens},S:${sheeps}`;
+            
             tg.sendData(JSON.stringify({
                 action: "update_farm",
                 balance: farmData.balance,
                 inventory: invString
             }));
+            
+            // Ma'lumot ketishi bilan yopiladi
+            setTimeout(() => { tg.close(); }, 100);
         }
+
+        // Dastlabki yuklash
+        updateUI();
+        renderFarm();
     </script>
 </body>
 </html>
