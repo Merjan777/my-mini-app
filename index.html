@@ -6,39 +6,46 @@
     <title>Hay Day: FAM Farm Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; --white: #ffffff; --wood: #8B4513; }
+        :root { --grass: #5d9e3f; --dirt: #8d6e63; --gold: #f1c40f; --white: #ffffff; --wood: #8B4513; --stars: #3498db; }
         body { background: var(--grass); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         .header { width: 95%; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; border: 2px solid var(--gold); box-sizing: border-box; position: sticky; top: 0; z-index: 10; }
-        .farm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 20px; padding-bottom: 220px; }
+        .farm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 20px; padding-bottom: 250px; }
         .building-slot { background: var(--wood); border: 4px solid #6c3a2a; border-radius: 18px; padding: 15px; text-align: center; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .animal-slot { background: var(--dirt); border: 4px solid #5d4037; border-radius: 18px; padding: 15px; text-align: center; position: relative; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .product-badge { position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; border: 2px solid white; animation: bounce 1s infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         .shop-menu { position: fixed; bottom: 0; width: 100%; background: #3e2723; border-radius: 25px 25px 0 0; padding: 15px; border-top: 4px solid var(--gold); z-index: 10; box-sizing: border-box; }
-        .btn { width: 100%; padding: 10px; margin-top: 5px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .shop-row { display: flex; gap: 5px; margin-bottom: 5px; }
+        .btn { width: 100%; padding: 10px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-stars { background: var(--stars); color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div style="color: var(--gold); font-weight: bold;">💰 <span id="balance">100</span> FAM</div>
-        <div id="warehouse-status">🥚:0 | 🧶:0 | 🥩:0</div>
+        <div id="warehouse-status">🥚:0|🧶:0|🥩:0</div>
     </div>
 
     <div class="farm-grid" id="farm-grid"></div>
 
     <div class="shop-menu">
-        <button class="btn" style="background: #2ecc71; color: white;" onclick="buyAnimal('chicken', 10)">+ 🐔 Tovuq (10)</button>
-        <button class="btn" style="background: #3498db; color: white;" onclick="buyAnimal('sheep', 150)">+ 🐑 Qo'y (150)</button>
-        <button class="btn" style="background: #e67e22; color: white;" onclick="buyAnimal('cow', 500)">+ 🐄 Mol (500)</button>
-        <button class="btn" style="background: var(--gold);" onclick="sellAll()">SOTISH 💰</button>
-        <button class="btn" style="background: #e74c3c; color: white;" onclick="saveGame()">💾 SAQLASH</button>
+        <div class="shop-row">
+            <button class="btn" style="background: #2ecc71; color: white;" onclick="buyAnimal('chicken', 10)">🐔 Tovuq</button>
+            <button class="btn" style="background: #3498db; color: white;" onclick="buyAnimal('sheep', 150)">🐑 Qo'y</button>
+            <button class="btn" style="background: #e67e22; color: white;" onclick="buyAnimal('cow', 500)">🐄 Mol</button>
+        </div>
+        <button class="btn btn-stars" onclick="buyWithStars()">⭐ 1000 FAM SOTIB OLISH (50 Stars)</button>
+        <div class="shop-row" style="margin-top: 5px;">
+            <button class="btn" style="background: var(--gold);" onclick="sellAll()">SOTISH 💰</button>
+            <button class="btn" style="background: #e74c3c; color: white;" onclick="saveGame()">💾 SAQLASH</button>
+        </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        let farmData = { balance: 100, animals: [], warehouse: { eggs: 0, wool: 0, meat: 0 }, buildings: { chicken_coop: 0, sheep_barn: 0, cow_shed: 0, house: 1 } };
+        let farmData = { balance: 100, animals: [], warehouse: { eggs: 0, wool: 0, meat: 0 } };
 
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
@@ -62,6 +69,12 @@
             }
             updateUI(); renderFarm();
         };
+
+        function buyWithStars() {
+            // Botga to'lov invoice yuborishi uchun so'rov jo'natamiz
+            tg.sendData(JSON.stringify({action: "stars_purchase", amount: 1000}));
+            tg.close(); // To'lov xabari ko'rinishi uchun yopiladi
+        }
 
         function buyAnimal(type, price) {
             if (farmData.balance >= price) {
