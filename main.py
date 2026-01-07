@@ -12,7 +12,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.client.default import DefaultBotProperties
 
 # ================== SOZLAMALAR ==================
-TOKEN = "8342014111:AAFb84Bvsg49CldK4Vv3xPNXY0nrvyWK1cM" 
+TOKEN = "8342014111:AAHw5QoiqADo6Ay749ZMGdGhCy2wv4zqCww" 
 MINI_APP_URL = "https://merjan777.github.io/my-mini-app/"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
