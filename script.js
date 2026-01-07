@@ -2,68 +2,144 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 const urlParams = new URLSearchParams(window.location.search);
 
-// SOZLAMALAR: Level talabi va XP mukofoti
+// SOZLAMALAR
 const CONFIG = {
     chicken: { time: 3, food: 1, name: "TOVUQXONA", levelReq: 1, xpReward: 10 },
     sheep:   { time: 5, food: 2, name: "QO'YXONA", levelReq: 3, xpReward: 20 },
     cow:     { time: 8, food: 3, name: "MOLXONA", levelReq: 5, xpReward: 50 }
 };
 
+// O'YIN HOLATI (URL dan o'qiladi)
 let game = {
     balance: parseInt(urlParams.get('b')) || 10,
     food: parseInt(urlParams.get('f')) || 5,
     inventory: parseInventory(urlParams.get('i')),
     warehouse: parseWarehouse(urlParams.get('w')),
     level: parseInt(urlParams.get('l')) || 1, 
-    xp: parseInt(urlParams.get('x')) || 0
+    xp: parseInt(urlParams.get('x')) || 0,
+    marketData: parseMarketData(urlParams.get('m')) // Bozor ma'lumotlari
 };
 
 let animalTimers = [];
 let currentView = 'map'; 
 
+// --- PARSING FUNKSIYALARI ---
 function parseInventory(str) {
     if (!str) return {};
     let inv = {};
-    str.split(',').forEach(item => {
-        let [type, count] = item.split(':');
-        if (type && count) inv[type] = parseInt(count);
-    });
+    str.split(',').forEach(item => { if(item.includes(':')) { let [k,v]=item.split(':'); inv[k]=parseInt(v); } });
     return inv;
 }
 
 function parseWarehouse(str) {
-    if (!str) return {eggs: 0, wool: 0, meat: 0};
     let wh = {eggs: 0, wool: 0, meat: 0};
+    if (!str) return wh;
     str.split(',').forEach(p => { 
         if(p.includes(':')) { 
             let [k,v]=p.split(':'); 
-            wh[getFullKey(k)]=parseInt(v); 
+            let key = (k=='E')?'eggs':(k=='W'?'wool':'meat');
+            wh[key]=parseInt(v); 
         }
     });
     return wh;
 }
 
-function getFullKey(k) { 
-    if(k=='E') return 'eggs'; 
-    if(k=='W') return 'wool'; 
-    if(k=='M') return 'meat'; 
-    return k; 
+function parseMarketData(str) {
+    if (!str) return [];
+    // Format: id:name:type:qty:price|...
+    return str.split('|').map(item => {
+        let p = item.split(':');
+        // Agar ma'lumot chala bo'lsa, tashlab yuboramiz
+        if(p.length < 5) return null;
+        return { id: p[0], seller: p[1], type: p[2], qty: p[3], price: p[4] };
+    }).filter(item => item !== null);
 }
 
-// --- XP VA LEVEL TIZIMI ---
-function getXpForNextLevel() { 
-    return game.level * 100; 
-}
-
-function addXp(amount) {
-    game.xp += amount;
-    let nextLvl = getXpForNextLevel();
-    if (game.xp >= nextLvl) {
-        game.xp -= nextLvl;
-        game.level++;
-        tg.showAlert(`🎉 LEVEL UP! Siz endi ${game.level}-levelsiz!`);
-    }
+// --- BOZOR LOGIKASI ---
+function showMarket() {
+    currentView = 'market';
+    // Barcha oynalarni yashirish
+    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+    // Bozorni ko'rsatish
+    document.getElementById('market-view').style.display = 'block';
+    renderMarketList();
     updateUI();
+}
+
+function renderMarketList() {
+    const list = document.getElementById('market-list');
+    list.innerHTML = "";
+    
+    if (game.marketData.length === 0) {
+        list.innerHTML = "<p style='text-align:center; color:#ccc; padding: 20px;'>Bozor bo'sh...</p>";
+        return;
+    }
+
+    game.marketData.forEach(item => {
+        let div = document.createElement('div');
+        div.className = 'market-item';
+        let emoji = (item.type=='eggs')?'🥚':(item.type=='wool'?'🧶':'🥩');
+        
+        div.innerHTML = `
+            <div class="m-info">
+                <span style="font-size:12px; color:#555;">Sotuvchi: ${item.seller}</span><br>
+                <span style="font-size:16px;">${emoji} <b>${item.qty}</b> dona</span>
+            </div>
+            <div style="text-align:right;">
+                <div class="m-price">${item.price} FAM</div>
+                <button class="btn-buy-market" onclick="buyFromMarket(${item.id})">OLISH</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function sellToMarket() {
+    let item = document.getElementById("sell-item").value;
+    let qty = parseInt(document.getElementById("sell-qty").value);
+    let price = parseInt(document.getElementById("sell-price").value);
+
+    if (!qty || qty <= 0) { tg.showAlert("Sonini kiriting!"); return; }
+    if (!price || price <= 0) { tg.showAlert("Narxni kiriting!"); return; }
+    
+    // Omborda bormi?
+    if ((game.warehouse[item] || 0) < qty) { 
+        tg.showAlert("Sizda yetarlicha mahsulot yo'q!"); 
+        return; 
+    }
+
+    tg.sendData(JSON.stringify({ 
+        action: "sell_market", 
+        item: item, 
+        qty: qty, 
+        price: price 
+    }));
+    tg.close();
+}
+
+function buyFromMarket(id) {
+    tg.showConfirm("Haqiqatan ham sotib olasizmi?", (confirmed) => {
+        if(confirmed) {
+            tg.sendData(JSON.stringify({ action: "buy_market", market_id: id }));
+            tg.close();
+        }
+    });
+}
+
+// --- ASOSIY KO'RINISH LOGIKASI ---
+function showMap() {
+    currentView = 'map';
+    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+    document.getElementById('map-view').style.display = 'block';
+    updateUI();
+}
+
+function openBuilding(type) {
+    currentView = 'building';
+    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+    document.getElementById('interior-view').style.display = 'block';
+    document.getElementById('room-title').innerText = CONFIG[type].name;
+    renderInterior(type);
 }
 
 function updateUI() {
@@ -74,31 +150,17 @@ function updateUI() {
     document.getElementById("count-sheep").innerText = game.inventory.sheep || 0;
     document.getElementById("count-cow").innerText = game.inventory.cow || 0;
 
-    // Ombor statistikasi
     document.getElementById("stat-egg").innerText = game.warehouse.eggs || 0;
     document.getElementById("stat-wool").innerText = game.warehouse.wool || 0;
     document.getElementById("stat-meat").innerText = game.warehouse.meat || 0;
 
-    // Level va XP Bar
+    // XP va Level
+    let xpReq = game.level * 100;
     document.getElementById("level").innerText = game.level;
-    document.getElementById("xp").innerText = game.xp + " / " + getXpForNextLevel();
-    let percent = (game.xp / getXpForNextLevel()) * 100;
+    document.getElementById("xp").innerText = game.xp + " / " + xpReq;
+    let percent = (game.xp / xpReq) * 100;
+    if(percent > 100) percent = 100;
     document.getElementById("xp-bar").style.width = percent + "%";
-}
-
-function showMap() {
-    currentView = 'map';
-    document.getElementById("map-view").style.display = "block";
-    document.getElementById("interior-view").style.display = "none";
-    updateUI();
-}
-
-function openBuilding(type) {
-    currentView = 'building';
-    document.getElementById("map-view").style.display = "none";
-    document.getElementById("interior-view").style.display = "block";
-    document.getElementById("room-title").innerText = CONFIG[type].name;
-    renderInterior(type);
 }
 
 function renderInterior(type) {
@@ -108,7 +170,7 @@ function renderInterior(type) {
 
     const count = game.inventory[type] || 0;
     if (count === 0) {
-        grid.innerHTML = "<p style='grid-column: span 3; color: #ffe0b2; text-align: center; font-size: 18px;'>Bu yer bo'm-bo'sh...<br>Do'kondan jonivor oling!</p>";
+        grid.innerHTML = "<p style='grid-column: span 3; color: #ffe0b2; text-align: center; font-size: 18px;'>Bu yer bo'm-bo'sh...</p>";
         return;
     }
 
@@ -139,62 +201,53 @@ function createAnimalCard(type, index, container) {
     });
 }
 
-// --- O'YIN TAYMERI ---
+// --- O'YIN LOOP (Mantiq) ---
 setInterval(() => {
     if (currentView !== 'building') return;
+    
     animalTimers.forEach(animal => {
+        // Hayvon o'sishi
         if (game.food > 0) { animal.progress += animal.speed; }
+        
+        // Mahsulot berish
         if (animal.progress >= 100) {
             let cost = CONFIG[animal.type].food;
             if (game.food >= cost) {
                 game.food -= cost;
                 animal.progress = 0;
-                produceItem(animal.type);
-                addXp(CONFIG[animal.type].xpReward); // XP qo'shish
+                
+                // Mahsulot qo'shish
+                if (animal.type === 'chicken') game.warehouse.eggs++;
+                if (animal.type === 'sheep') game.warehouse.wool++;
+                if (animal.type === 'cow') game.warehouse.meat++;
+                
+                // XP qo'shish
+                game.xp += CONFIG[animal.type].xpReward;
+                let nextLvl = game.level * 100;
+                if(game.xp >= nextLvl) {
+                    game.xp -= nextLvl;
+                    game.level++;
+                    tg.showAlert(`🎉 LEVEL UP! ${game.level}-level!`);
+                }
+
                 updateUI();
+                
+                // Animatsiya
                 document.getElementById(animal.iconId).classList.add('pop');
                 setTimeout(()=>document.getElementById(animal.iconId).classList.remove('pop'), 300);
-            } else { animal.progress = 99; }
+            } else { 
+                animal.progress = 99; // Yem yetmasa kutib turadi
+            }
         }
+        
         const bar = document.getElementById(animal.id);
         if(bar) bar.style.width = animal.progress + "%";
     });
 }, 100);
 
-function produceItem(type) {
-    if (type === 'chicken') game.warehouse.eggs++;
-    if (type === 'sheep') game.warehouse.wool++;
-    if (type === 'cow') game.warehouse.meat++;
-}
-
+// --- DO'KON FUNKSIYALARI ---
 function openShop() { document.getElementById("shop-modal").style.display = "block"; }
 function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
-
-// --- YANGI: BOZORGA SOTISH ---
-function sellToMarket() {
-    let item = document.getElementById("sell-item").value;
-    let price = parseInt(document.getElementById("sell-price").value);
-
-    // Tekshirishlar
-    if (!price || price <= 0) {
-        tg.showAlert("❌ Iltimos, to'g'ri narx yozing!");
-        return;
-    }
-    if (game.warehouse[item] <= 0) {
-        tg.showAlert("❌ Sizda sotish uchun bu mahsulot yo'q!");
-        return;
-    }
-
-    // Botga ma'lumot yuborish
-    tg.sendData(JSON.stringify({
-        action: "sell_market",
-        item: item,
-        price: price
-    }));
-    
-    // Web App yopiladi
-    tg.close(); 
-}
 
 function buyAnimal(type, price) {
     if (game.level < CONFIG[type].levelReq) {
@@ -243,4 +296,6 @@ function saveGame() {
         level: game.level, xp: game.xp
     }));
 }
+
+// Boshlang'ich yangilash
 updateUI();

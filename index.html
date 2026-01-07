@@ -13,15 +13,10 @@
         <div class="header-top">
             <div class="header-item">💰 <span id="balance" style="color:#ffd700">0</span></div>
             <div class="header-item">🌾 <span id="food" style="color:#ffab40">0</span></div>
-            <div onclick="saveGame()" style="cursor: pointer; background: #66bb6a; padding: 5px 10px; border-radius: 8px; border-bottom: 3px solid #388e3c; color: white;">
-                💾
-            </div>
+            <div onclick="saveGame()" style="cursor: pointer; background: #66bb6a; padding: 5px 10px; border-radius: 8px; border-bottom: 3px solid #388e3c; color: white;">💾</div>
         </div>
-        
         <div>
-            <div class="xp-container">
-                <div class="xp-fill" id="xp-bar"></div>
-            </div>
+            <div class="xp-container"><div class="xp-fill" id="xp-bar"></div></div>
             <div class="level-text">LEVEL <span id="level">1</span> (<span id="xp">0</span> XP)</div>
         </div>
     </div>
@@ -32,59 +27,61 @@
         <div class="stat-item">🥩 <span id="stat-meat">0</span></div>
     </div>
 
-    <div id="map-view">
+    <div id="map-view" class="view-section">
         <h3 class="map-title">FERMA XARITASI 🗺</h3>
         <div class="map-grid">
             <div class="building" onclick="openBuilding('chicken')">
-                <span class="b-icon">🛖</span>
-                <div class="b-name">Tovuqxona</div>
-                <div class="b-count" id="count-chicken">0</div>
+                <span class="b-icon">🛖</span><div class="b-name">Tovuqxona</div><div class="b-count" id="count-chicken">0</div>
             </div>
             <div class="building" onclick="openBuilding('sheep')">
-                <span class="b-icon">🏚</span>
-                <div class="b-name">Qo'yxona</div>
-                <div class="b-count" id="count-sheep">0</div>
+                <span class="b-icon">🏚</span><div class="b-name">Qo'yxona</div><div class="b-count" id="count-sheep">0</div>
             </div>
             <div class="building" onclick="openBuilding('cow')">
-                <span class="b-icon">🏠</span>
-                <div class="b-name">Molxona</div>
-                <div class="b-count" id="count-cow">0</div>
+                <span class="b-icon">🏠</span><div class="b-name">Molxona</div><div class="b-count" id="count-cow">0</div>
             </div>
             <div class="building" onclick="openShop()">
-                <span class="b-icon">🏪</span>
-                <div class="b-name">Bozor & Yem</div>
+                <span class="b-icon">🏪</span><div class="b-name">Bozor & Yem</div>
             </div>
         </div>
     </div>
 
-    <div id="interior-view">
+    <div id="market-view" class="view-section" style="display: none;">
+        <h3 class="map-title">JAHON BOZORI 🌍</h3>
+        
+        <div class="sell-panel">
+            <h4 style="margin: 0 0 10px 0; text-align: center;">📤 O'z narsangizni soting</h4>
+            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                <select id="sell-item" style="flex:1; padding: 8px; border-radius: 5px;">
+                    <option value="eggs">🥚 Tuxum</option>
+                    <option value="wool">🧶 Jun</option>
+                    <option value="meat">🥩 Go'sht</option>
+                </select>
+                <input type="number" id="sell-qty" placeholder="Soni" style="width: 50px; padding: 8px; border-radius: 5px;">
+            </div>
+            <input type="number" id="sell-price" placeholder="Umumiy narx (FAM)" style="width: 100%; padding: 8px; border-radius: 5px; margin-bottom: 5px; box-sizing: border-box;">
+            <button onclick="sellToMarket()" class="btn-sell">SOTUVGA QO'YISH</button>
+        </div>
+
+        <h4 style="color: #ffe0b2; margin: 15px 0 10px 0;">🛒 Sotuvdagi narsalar:</h4>
+        <div id="market-list" class="market-list">
+            <p style="text-align: center; color: #ddd;">Yuklanmoqda...</p>
+        </div>
+    </div>
+
+    <div id="interior-view" class="view-section" style="display: none;">
         <button class="back-btn" onclick="showMap()">⬅️ Xaritaga qaytish</button>
         <h3 id="room-title" class="map-title">Xona</h3>
         <div class="farm-grid" id="farm-grid"></div>
     </div>
 
     <div class="controls">
+        <button class="ctrl-btn" onclick="showMap()">🏠 Ferma</button>
+        <button class="ctrl-btn" onclick="showMarket()">🌎 Bozor</button>
         <button class="ctrl-btn" onclick="openShop()">🛒 Do'kon</button>
-        <button class="ctrl-btn ctrl-save" onclick="sellAll()">💰 Sotish</button>
     </div>
 
     <div id="shop-modal">
         <h3 style="text-align: center; margin-top: 0; font-size: 24px;">Fermer Do'koni</h3>
-        
-        <div style="background: #fff8e1; padding: 10px; border-radius: 10px; border: 2px dashed #ffa000; margin-bottom: 15px;">
-            <h4 style="margin: 0 0 10px 0; text-align: center; color: #e65100;">🏪 Bozorga sotish</h4>
-            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                <select id="sell-item" style="padding: 8px; border-radius: 5px; width: 60%; border: 1px solid #ffb74d;">
-                    <option value="eggs">🥚 Tuxum</option>
-                    <option value="wool">🧶 Jun</option>
-                    <option value="meat">🥩 Go'sht</option>
-                </select>
-                <input type="number" id="sell-price" placeholder="Narx" style="padding: 8px; border-radius: 5px; width: 35%; border: 1px solid #ffb74d;">
-            </div>
-            <button onclick="sellToMarket()" style="width: 100%; background: #00897b; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; border-bottom: 3px solid #004d40;">
-                📤 Sotuvga qo'yish
-            </button>
-        </div>
         <div class="shop-row">
             <button class="btn-buy-anim" onclick="buyAnimal('chicken', 10)">
                 <div>🐔 Tovuq</div> <span>10 💰</span>
@@ -101,7 +98,7 @@
             </button>
             
             <button class="btn-donate" onclick="buyRealMoney()">
-                <div>⭐ 1000 FAM + 10 YEM</div> <span>50 Stars</span>
+                <div>⭐ 1000 FAM</div> <span>50 Stars</span>
             </button>
 
             <button class="shop-row close-shop" onclick="closeShop()">Yopish ❌</button>
