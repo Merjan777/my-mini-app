@@ -11,7 +11,7 @@ from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder 
 from aiogram.client.default import DefaultBotProperties
 
-# ================== SOZLAMALAR (O'ZGARTIRING!) ==================
+# ================== SOZLAMALAR ==================
 TOKEN = "8342014111:AAFb84Bvsg49CldK4Vv3xPNXY0nrvyWK1cM" 
 MINI_APP_URL = "https://merjan777.github.io/my-mini-app/"
 
@@ -22,10 +22,12 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 logging.basicConfig(level=logging.INFO)
 
-# ================== BAZA ==================
+# ================== BAZA VA MIGRATSIYA ==================
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    
+    # Users jadvali
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         user_id INTEGER PRIMARY KEY,
@@ -41,6 +43,8 @@ def init_db():
         last_bonus_time INTEGER DEFAULT 0
     )
     """)
+    
+    # Market jadvali
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS market (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +56,15 @@ def init_db():
         date INTEGER
     )
     """)
-    conn.commit(); conn.close()
+
+    # 🔥 MIGRATION: Agar full_name ustuni bo'lmasa, qo'shish
+    cursor.execute("PRAGMA table_info(users)")
+    cols = [c[1] for c in cursor.fetchall()]
+    if "full_name" not in cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN full_name TEXT")
+
+    conn.commit()
+    conn.close()
 
 # ================== URL GENERATOR ==================
 def get_game_url(user_id):
@@ -83,17 +95,16 @@ async def start(message: types.Message, command: CommandObject):
     full_name = html.escape(message.from_user.full_name)
     now = int(time.time())
     
-    # Argumentni olish
     payload = command.args 
 
-    # --- 1. TO'LOV TEKSHIRISH (XATOSI TUZATILGAN JOY) ---
+    # --- 1. TO'LOV TEKSHIRISH (FIXED ARGUMENTS) ---
     if payload == "buy_special":
         await bot.send_invoice(
             chat_id=message.chat.id,
             title="🔥 SUPER PACK",
             description="5000 FAM + 50 Yem + 1 Sigir (Chegirma!)",
             payload="special_offer_pack",
-            provider_token="", # Stars uchun bo'sh
+            provider_token="", 
             currency="XTR",
             prices=[types.LabeledPrice(label="Super Pack", amount=100)]
         )
@@ -104,7 +115,7 @@ async def start(message: types.Message, command: CommandObject):
             title="💰 1000 FAM",
             description="Fermer paketi (1000 FAM + 10 Yem)",
             payload="pack_1000_fam",
-            provider_token="", # Stars uchun bo'sh
+            provider_token="", 
             currency="XTR",
             prices=[types.LabeledPrice(label="1000 FAM", amount=50)]
         )
@@ -120,7 +131,7 @@ async def start(message: types.Message, command: CommandObject):
         cursor.execute("INSERT INTO users (user_id, full_name, balance, food, level, xp, last_online, invites) VALUES (?, ?, 10, 5, 1, 0, ?, 0)", (user_id, full_name, now))
         msg_text = f"👋 Salom, {full_name}!\n🌾 <b>Fermangiz ochildi!</b>"
         
-        # Referral
+        # Referral logikasi
         if payload and payload.isdigit():
             referrer_id = int(payload)
             if referrer_id != user_id:
@@ -142,20 +153,17 @@ async def start(message: types.Message, command: CommandObject):
     bot_username = (await bot.get_me()).username
     kb = InlineKeyboardBuilder()
     
-    # TUGMALAR
     kb.row(types.InlineKeyboardButton(text="🚜 O'yinni Boshlash", web_app=types.WebAppInfo(url=get_game_url(user_id))))
     kb.row(types.InlineKeyboardButton(text="🔄 Yangilash", callback_data="refresh"), types.InlineKeyboardButton(text="🏆 Reyting", callback_data="top_10"))
     kb.row(types.InlineKeyboardButton(text="🎁 Bonus", callback_data="daily_bonus"), types.InlineKeyboardButton(text="🔗 Do'stlar", callback_data="invite_friends"))
-    # Deep Link To'lov Tugmalari
     kb.row(types.InlineKeyboardButton(text="🔥 Aksiya (100⭐️)", url=f"https://t.me/{bot_username}?start=buy_special"))
     kb.row(types.InlineKeyboardButton(text="💰 1000 FAM (50⭐️)", url=f"https://t.me/{bot_username}?start=buy_coins"))
 
     await message.answer(msg_text, reply_markup=kb.as_markup())
 
-# ================== TO'LOV HANDLERLARI (MUHIM) ==================
+# ================== TO'LOV HANDLERLARI ==================
 @dp.pre_checkout_query()
 async def pre_check(q):
-    # To'lovni tasdiqlash
     await bot.answer_pre_checkout_query(q.id, ok=True)
 
 @dp.message(F.successful_payment)
@@ -168,19 +176,18 @@ async def success_pay(m):
     if payload == "pack_1000_fam":
         cursor.execute("UPDATE users SET balance = balance + 1000, food = food + 10 WHERE user_id = ?", (user_id,))
         msg = "🎉 <b>To'lov Muvaffaqiyatli!</b>\n+1000 FAM va +10 Yem."
-        
     elif payload == "special_offer_pack":
         cursor.execute("UPDATE users SET balance = balance + 5000, food = food + 50 WHERE user_id = ?", (user_id,))
         u = cursor.execute("SELECT inventory FROM users WHERE user_id=?", (user_id,)).fetchone()
         inv = json.loads(u[0])
         inv['cow'] = inv.get('cow', 0) + 1
         cursor.execute("UPDATE users SET inventory=? WHERE user_id=?", (json.dumps(inv), user_id))
-        msg = "🔥 <b>SUPER AKSIYA MUBORAK!</b>\n💰 5000 FAM\n🌾 50 Yem\n🐄 1 Sigir qo'shildi!"
+        msg = "🔥 <b>SUPER AKSIYA!</b>\n+5000 FAM, +50 Yem, +1 Sigir!"
 
     conn.commit(); conn.close()
     await m.answer(msg)
 
-# ================== WEBAPP (MARKET) ==================
+# ================== WEBAPP (MARKET & SAVE) ==================
 @dp.message(F.web_app_data)
 async def handle_webapp(message: types.Message):
     try:
@@ -239,33 +246,35 @@ async def handle_webapp(message: types.Message):
 
 # ================== CALLBACKS ==================
 @dp.callback_query(F.data == "refresh")
-async def r(c): 
+async def r(c: types.CallbackQuery): 
     dummy = CommandObject(prefix="/", command="start", args=None)
     await start(c.message, dummy)
     await c.message.delete()
 
 @dp.callback_query(F.data == "top_10")
-async def t(c):
+async def t(c: types.CallbackQuery):
     conn = sqlite3.connect(DB_PATH); top = conn.cursor().execute("SELECT full_name, balance FROM users ORDER BY balance DESC LIMIT 10").fetchall(); conn.close()
-    text = "🏆 <b>TOP 10</b>\n" + "\n".join([f"{i+1}. {html.escape(u[0])} - {u[1]}" for i, u in enumerate(top)])
+    text = "🏆 <b>TOP 10</b>\n" + "\n".join([f"{i+1}. {html.escape(u[0] if u[0] else 'Fermer')} - {u[1]}" for i, u in enumerate(top)])
     kb = InlineKeyboardBuilder(); kb.row(types.InlineKeyboardButton(text="⬅️ Orqaga", callback_data="refresh"))
     await c.message.edit_text(text, reply_markup=kb.as_markup())
 
 @dp.callback_query(F.data == "daily_bonus")
-async def b(c):
+async def b(c: types.CallbackQuery):
     uid = c.from_user.id; now = int(time.time()); conn = sqlite3.connect(DB_PATH); cur = conn.cursor()
     u = cur.execute("SELECT last_bonus_time FROM users WHERE user_id=?", (uid,)).fetchone()
     last = u[0] if u else 0
     if now - last >= 86400:
         cur.execute("UPDATE users SET balance=balance+100, last_bonus_time=? WHERE user_id=?", (now, uid)); conn.commit(); await c.answer("✅ +100 FAM!", show_alert=True)
-    else: await c.answer("⏳ Vaqt bo'lmadi", show_alert=True)
+    else: await c.answer("⏳ Bonusga hali bor!", show_alert=True)
     conn.close()
 
 @dp.callback_query(F.data == "invite_friends")
-async def i(c): 
+async def i(c: types.CallbackQuery): 
+    me = await bot.get_me()
     kb = InlineKeyboardBuilder(); kb.row(types.InlineKeyboardButton(text="⬅️ Orqaga", callback_data="refresh"))
-    await c.message.edit_text(f"🔗 Ssilka:\n<code>https://t.me/{(await bot.get_me()).username}?start={c.from_user.id}</code>", reply_markup=kb.as_markup())
+    await c.message.edit_text(f"🔗 <b>Sizning referal ssilkangiz:</b>\n<code>https://t.me/{me.username}?start={c.from_user.id}</code>", reply_markup=kb.as_markup())
 
+# ================== ASOSIY ==================
 async def main():
     init_db()
     print("Bot ishga tushdi...")
