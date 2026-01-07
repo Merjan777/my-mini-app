@@ -3,8 +3,7 @@ tg.expand();
 const urlParams = new URLSearchParams(window.location.search);
 
 // ====================================================================
-// 🚨 MUHIM: BOTINGIZNING USERNAMESINI SHU YERGA YOZING (Kuchukchasiz)
-// Masalan: const BOT_USERNAME = "FermerBoyBot";
+// 🤖 BOT USERNAME (Sizniki to'g'ri yozildi)
 const BOT_USERNAME = "SkinTycoonBot"; 
 // ====================================================================
 
@@ -15,7 +14,7 @@ const CONFIG = {
     cow:     { time: 8, food: 3, name: "MOLXONA", levelReq: 5, xpReward: 50 }
 };
 
-// O'YIN HOLATI (URL dan o'qiladi)
+// O'YIN HOLATI
 let game = {
     balance: parseInt(urlParams.get('b')) || 10,
     food: parseInt(urlParams.get('f')) || 5,
@@ -30,20 +29,18 @@ let animalTimers = [];
 let currentView = 'map'; 
 
 // ================== TO'LOV TIZIMI (DEEP LINK) ==================
-// Bu usul Web Appni yopadi va botga start komandasini yuboradi.
-// Bot esa darhol to'lov chekini chiqarib beradi. 100% Ishlaydi.
-
+// Bu kod 100% ishlaydi: Web App yopiladi -> Botga o'tadi -> Chek chiqadi
 function buySpecialOffer() {
-    tg.openTelegramLink(`https://t.me/${SkinTycoonBot}?start=buy_special_offer`);
+    tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=buy_special_offer`);
     tg.close();
 }
 
 function buyRealMoney() {
-    tg.openTelegramLink(`https://t.me/${SkinTycoonBot}?start=buy_stars_pack`);
+    tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=buy_stars_pack`);
     tg.close();
 }
 
-// ================== AKSIYA VA MODALLAR ==================
+// ================== AKSIYA OYNASI ==================
 function openSpecialOffer() {
     document.getElementById("special-offer-modal").style.display = "flex";
 }
@@ -52,17 +49,14 @@ function closeSpecialOffer() {
     document.getElementById("special-offer-modal").style.display = "none";
 }
 
-// O'yinga kirganda avtomatik taklif (Agar level kichik bo'lsa)
+// O'yinga kirganda 1.5 sekunddan keyin Aksiya chiqadi (faqat kichik levellarda)
 setTimeout(() => {
     if (game.level < 5) {
         openSpecialOffer();
     }
 }, 1500);
 
-function openShop() { document.getElementById("shop-modal").style.display = "block"; }
-function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
-
-// ================== PARSING (MA'LUMOTLARNI O'QISH) ==================
+// ================== PARSING ==================
 function parseInventory(str) {
     if (!str) return {};
     let inv = {};
@@ -137,13 +131,11 @@ function sellToMarket() {
     if (!qty || qty <= 0) { tg.showAlert("Sonini kiriting!"); return; }
     if (!price || price <= 0) { tg.showAlert("Narxni kiriting!"); return; }
     
-    // Omborda bormi?
     if ((game.warehouse[item] || 0) < qty) { 
-        tg.showAlert("Sizda yetarlicha mahsulot yo'q!"); 
+        tg.showAlert("Omborda yetarlicha mahsulot yo'q!"); 
         return; 
     }
 
-    // Bozorda sotish uchun Invoice shart emas, shuning uchun sendData ishlaydi
     tg.sendData(JSON.stringify({ 
         action: "sell_market", 
         item: item, 
@@ -162,7 +154,7 @@ function buyFromMarket(id) {
     });
 }
 
-// ================== O'YIN MEXANIKASI ==================
+// ================== O'YIN OYNALARI ==================
 function showMap() {
     currentView = 'map';
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
@@ -178,6 +170,7 @@ function openBuilding(type) {
     renderInterior(type);
 }
 
+// ================== UI YANGILASH ==================
 function updateUI() {
     document.getElementById("balance").innerText = Math.floor(game.balance);
     document.getElementById("food").innerText = game.food;
@@ -193,6 +186,7 @@ function updateUI() {
     let xpReq = game.level * 100;
     document.getElementById("level").innerText = game.level;
     document.getElementById("xp").innerText = game.xp + " / " + xpReq;
+    
     let percent = (game.xp / xpReq) * 100;
     if(percent > 100) percent = 100;
     document.getElementById("xp-bar").style.width = percent + "%";
@@ -236,7 +230,7 @@ function createAnimalCard(type, index, container) {
     });
 }
 
-// Loop
+// ================== O'YIN TAYMERI ==================
 setInterval(() => {
     if (currentView !== 'building') return;
     
@@ -275,7 +269,10 @@ setInterval(() => {
     });
 }, 100);
 
-// ================== DO'KON VA ACTIONS ==================
+// ================== DO'KON ==================
+function openShop() { document.getElementById("shop-modal").style.display = "block"; }
+function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
+
 function buyAnimal(type, price) {
     if (game.level < CONFIG[type].levelReq) {
         tg.showAlert(`🔒 Bu hayvon ${CONFIG[type].levelReq}-levelda ochiladi!`);
@@ -319,5 +316,5 @@ function saveGame() {
     }));
 }
 
-// Boshlash
+// Boshlang'ich yangilash
 updateUI();
