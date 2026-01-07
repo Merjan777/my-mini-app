@@ -23,7 +23,7 @@ let game = {
 let animalTimers = [];
 let currentView = 'map'; 
 
-// --- PARSING FUNKSIYALARI ---
+// --- 1. PARSING FUNKSIYALARI ---
 function parseInventory(str) {
     if (!str) return {};
     let inv = {};
@@ -49,13 +49,33 @@ function parseMarketData(str) {
     // Format: id:name:type:qty:price|...
     return str.split('|').map(item => {
         let p = item.split(':');
-        // Agar ma'lumot chala bo'lsa, tashlab yuboramiz
         if(p.length < 5) return null;
         return { id: p[0], seller: p[1], type: p[2], qty: p[3], price: p[4] };
     }).filter(item => item !== null);
 }
 
-// --- BOZOR LOGIKASI ---
+// --- 2. SUPER AKSIYA (MARKETING) ---
+function openSpecialOffer() {
+    document.getElementById("special-offer-modal").style.display = "flex";
+}
+
+function closeSpecialOffer() {
+    document.getElementById("special-offer-modal").style.display = "none";
+}
+
+function buySpecialOffer() {
+    tg.sendData(JSON.stringify({ action: "buy_special_offer" }));
+    tg.close();
+}
+
+// O'yinga kirganda avtomatik taklif qilish (Agar 5-leveldan kichik bo'lsa)
+setTimeout(() => {
+    if (game.level < 5) {
+        openSpecialOffer();
+    }
+}, 1500);
+
+// --- 3. BOZOR LOGIKASI ---
 function showMarket() {
     currentView = 'market';
     // Barcha oynalarni yashirish
@@ -71,7 +91,7 @@ function renderMarketList() {
     list.innerHTML = "";
     
     if (game.marketData.length === 0) {
-        list.innerHTML = "<p style='text-align:center; color:#ccc; padding: 20px;'>Bozor bo'sh...</p>";
+        list.innerHTML = "<p style='text-align:center; color:#888; padding: 20px;'>Hozircha bozor bo'sh...</p>";
         return;
     }
 
@@ -82,7 +102,7 @@ function renderMarketList() {
         
         div.innerHTML = `
             <div class="m-info">
-                <span style="font-size:12px; color:#555;">Sotuvchi: ${item.seller}</span><br>
+                <span style="font-size:12px; color:#555;">Sotuvchi: <b>${item.seller}</b></span><br>
                 <span style="font-size:16px;">${emoji} <b>${item.qty}</b> dona</span>
             </div>
             <div style="text-align:right;">
@@ -118,7 +138,7 @@ function sellToMarket() {
 }
 
 function buyFromMarket(id) {
-    tg.showConfirm("Haqiqatan ham sotib olasizmi?", (confirmed) => {
+    tg.showConfirm("Sotib olasizmi?", (confirmed) => {
         if(confirmed) {
             tg.sendData(JSON.stringify({ action: "buy_market", market_id: id }));
             tg.close();
@@ -126,7 +146,7 @@ function buyFromMarket(id) {
     });
 }
 
-// --- ASOSIY KO'RINISH LOGIKASI ---
+// --- 4. ASOSIY KO'RINISH LOGIKASI ---
 function showMap() {
     currentView = 'map';
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
@@ -201,7 +221,7 @@ function createAnimalCard(type, index, container) {
     });
 }
 
-// --- O'YIN LOOP (Mantiq) ---
+// --- 5. O'YIN LOOP (Mantiq) ---
 setInterval(() => {
     if (currentView !== 'building') return;
     
@@ -245,7 +265,7 @@ setInterval(() => {
     });
 }, 100);
 
-// --- DO'KON FUNKSIYALARI ---
+// --- 6. DO'KON VA BOSHQA FUNKSIYALAR ---
 function openShop() { document.getElementById("shop-modal").style.display = "block"; }
 function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
 

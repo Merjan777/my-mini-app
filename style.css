@@ -75,7 +75,7 @@ body {
     padding: 5px 10px; font-size: 14px; border: 3px solid white; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 }
 
-/* ================= BOZOR (Market) - YANGI ================= */
+/* ================= BOZOR (Market) ================= */
 .sell-panel {
     background: #fff3e0; padding: 15px; border-radius: 15px;
     border: 3px solid #e65100; margin-bottom: 20px; color: #3e2723;
@@ -149,6 +149,39 @@ body {
 .btn-donate { background: linear-gradient(45deg, #8e44ad, #9b59b6); border-bottom: 5px solid #71368a; box-shadow: 0 0 15px rgba(142,68,173,0.5); }
 .close-shop { background: #d32f2f; justify-content: center !important; margin-top: 15px; border-bottom: 5px solid #b71c1c; }
 
+/* ================= SUPER AKSIYA MODAL (YANGI) ================= */
+#special-offer-modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(5px);
+}
+.offer-content {
+    background: linear-gradient(135deg, #ff9800, #ff5722); padding: 3px; border-radius: 20px; width: 85%;
+    box-shadow: 0 0 30px #ff5722; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.offer-body { background: #fff3e0; border-radius: 17px; padding: 20px; text-align: center; color: #bf360c; }
+.offer-header { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 2px 2px 0 #bf360c; margin-bottom: 10px; text-transform: uppercase; }
+.offer-items span { display: block; font-size: 20px; font-weight: bold; margin: 8px 0; border-bottom: 1px dashed #ffab91; padding-bottom: 5px; }
+.offer-old-price { text-decoration: line-through; color: #888; font-size: 14px; margin-top: 15px; }
+.offer-new-price { font-size: 28px; font-weight: 900; color: #d32f2f; margin-bottom: 15px; animation: pulse 1.5s infinite; }
+.btn-buy-offer {
+    width: 100%; padding: 15px; background: linear-gradient(to bottom, #4caf50, #2e7d32);
+    color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold;
+    cursor: pointer; box-shadow: 0 5px 0 #1b5e20; margin-bottom: 10px;
+}
+.btn-buy-offer:active { transform: translateY(3px); box-shadow: 0 2px 0 #1b5e20; }
+.btn-close-offer { background: none; border: none; color: #777; font-weight: bold; cursor: pointer; text-decoration: underline; }
+
+/* QIMIRLAB TURADIGAN TUGMA */
+.floating-offer-btn {
+    position: fixed; top: 80px; right: 10px; background: linear-gradient(45deg, #ff5722, #ff9800);
+    width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    font-size: 24px; box-shadow: 0 4px 10px rgba(255, 87, 34, 0.5); cursor: pointer; z-index: 900;
+    border: 2px solid white; animation: shake 3s infinite;
+}
+
 /* ================= ANIMATSIYALAR ================= */
 @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
-.pop { animation: pop 0.3s ease; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: rotate(0deg); } 10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); } 20%, 40%, 60%, 80% { transform: rotate(10deg); } }

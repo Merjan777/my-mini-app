@@ -96,13 +96,32 @@
             <button class="btn-buy-food" onclick="buyFood()">
                 <div>🌾 5 ta YEM</div> <span>2 💰</span>
             </button>
-            
             <button class="btn-donate" onclick="buyRealMoney()">
                 <div>⭐ 1000 FAM</div> <span>50 Stars</span>
             </button>
-
             <button class="shop-row close-shop" onclick="closeShop()">Yopish ❌</button>
         </div>
+    </div>
+
+    <div id="special-offer-modal" style="display: none;">
+        <div class="offer-content">
+            <div class="offer-header">🔥 CHEKLANGAN TAKLIF 🔥</div>
+            <div class="offer-body">
+                <div class="offer-items">
+                    <span>💰 5000 FAM</span>
+                    <span>🌾 50 YEM</span>
+                    <span>🐄 1 SIGIR</span>
+                </div>
+                <div class="offer-old-price">Eski narxi: 100 ⭐️</div>
+                <div class="offer-new-price">HOZIR: 25 ⭐️</div>
+                <button class="btn-buy-offer" onclick="buySpecialOffer()">SOTIB OLISH</button>
+                <button class="btn-close-offer" onclick="closeSpecialOffer()">Keyinroq</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-offer-btn" onclick="openSpecialOffer()">
+        🔥
     </div>
 
     <script src="script.js"></script>
