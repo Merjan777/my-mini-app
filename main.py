@@ -3,150 +3,274 @@ import logging
 import sqlite3
 import json
 import os
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+import time
+import html
 
-# --- SOZLAMALAR ---
-TOKEN = "8342014111:AAFb84Bvsg49CldK4Vv3xPNXY0nrvyWK1cM"
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import CommandStart, CommandObject, Command
+from aiogram.utils.keyboard import InlineKeyboardBuilder 
+from aiogram.client.default import DefaultBotProperties
+
+# ================== SOZLAMALAR (O'ZGARTIRING!) ==================
+TOKEN = "8342014111:AAFb84Bvsg49CldK4Vv3xPNXY0nrvyWK1cM" 
 MINI_APP_URL = "https://merjan777.github.io/my-mini-app/"
 
-bot = Bot(token=TOKEN)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "game_data.db")
+
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 logging.basicConfig(level=logging.INFO)
 
-# Render serverida ma'lumotlar o'chmasligi uchun doimiy disk yo'li
-DB_PATH = "/data/game_data.db" if os.path.exists("/data") else "game_data.db"
-
+# ================== BAZA ==================
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Barcha kerakli ustunlar bilan bazani yaratish
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users 
-                      (user_id INTEGER PRIMARY KEY, 
-                       balance INTEGER DEFAULT 100, 
-                       inventory TEXT DEFAULT '',
-                       warehouse TEXT DEFAULT 'E:0,W:0,M:0',
-                       referred_by INTEGER DEFAULT 0)''')
-    conn.commit()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        user_id INTEGER PRIMARY KEY,
+        full_name TEXT,
+        balance INTEGER DEFAULT 10,
+        inventory TEXT DEFAULT '{}',
+        warehouse TEXT DEFAULT '{"eggs":0,"wool":0,"meat":0}',
+        food INTEGER DEFAULT 5,
+        level INTEGER DEFAULT 1,
+        xp INTEGER DEFAULT 0,
+        last_online INTEGER DEFAULT 0,
+        invites INTEGER DEFAULT 0,
+        last_bonus_time INTEGER DEFAULT 0
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS market (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        seller_id INTEGER,
+        seller_name TEXT,
+        item_type TEXT,
+        quantity INTEGER,
+        price INTEGER,
+        date INTEGER
+    )
+    """)
+    conn.commit(); conn.close()
+
+# ================== URL GENERATOR ==================
+def get_game_url(user_id):
+    conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+    user = cursor.execute("SELECT balance, inventory, warehouse, food, level, xp FROM users WHERE user_id=?", (user_id,)).fetchone()
+    market_items = cursor.execute("SELECT id, seller_name, item_type, quantity, price FROM market ORDER BY date DESC LIMIT 30").fetchall()
     conn.close()
 
-def get_url_with_params(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    user = cursor.execute("SELECT balance, inventory, warehouse FROM users WHERE user_id = ?", (user_id,)).fetchone()
-    conn.close()
+    if not user: return MINI_APP_URL 
+
+    balance = user[0]
+    try: inv = json.loads(user[1]) if user[1] else {}
+    except: inv = {}
+    try: wh = json.loads(user[2]) if user[2] else {}
+    except: wh = {}
     
-    b = user[0] if user else 100
-    i = user[1] if user else ""
-    w = user[2] if user else "E:0,W:0,M:0"
-    # Yangilangan UI uchun parametrlarni URL ga biriktirish
-    return f"{MINI_APP_URL}?b={b}&i={i}&w={w}"
+    inv_str = ",".join([f"{k}:{v}" for k, v in inv.items()])
+    ware_str = f"eggs:{wh.get('eggs',0)},wool:{wh.get('wool',0)},meat:{wh.get('meat',0)}"
+    m_list = [f"{m[0]}:{m[1].replace(':','')[:10]}:{m[2]}:{m[3]}:{m[4]}" for m in market_items]
+    
+    return f"{MINI_APP_URL}?b={balance}&f={user[3]}&l={user[4]}&x={user[5]}&i={inv_str}&w={ware_str}&m={'|'.join(m_list)}"
 
-@dp.message(Command("start"))
-async def start(message: types.Message):
+# ================== START HANDLER (DEEP LINK + REFERRAL) ==================
+@dp.message(CommandStart())
+async def start(message: types.Message, command: CommandObject):
     init_db()
     user_id = message.from_user.id
+    full_name = html.escape(message.from_user.full_name)
+    now = int(time.time())
     
-    # Referal ID ni aniqlash (/start 123456)
-    args = message.text.split()
-    referrer_id = int(args[1]) if len(args) > 1 and args[1].isdigit() else 0
+    # Argumentni olish
+    payload = command.args 
 
+    # --- 1. TO'LOV TEKSHIRISH (XATOSI TUZATILGAN JOY) ---
+    if payload == "buy_special":
+        await bot.send_invoice(
+            chat_id=message.chat.id,
+            title="🔥 SUPER PACK",
+            description="5000 FAM + 50 Yem + 1 Sigir (Chegirma!)",
+            payload="special_offer_pack",
+            provider_token="", # Stars uchun bo'sh
+            currency="XTR",
+            prices=[types.LabeledPrice(label="Super Pack", amount=100)]
+        )
+        return
+    elif payload == "buy_coins" or payload == "buy_stars_pack":
+        await bot.send_invoice(
+            chat_id=message.chat.id,
+            title="💰 1000 FAM",
+            description="Fermer paketi (1000 FAM + 10 Yem)",
+            payload="pack_1000_fam",
+            provider_token="", # Stars uchun bo'sh
+            currency="XTR",
+            prices=[types.LabeledPrice(label="1000 FAM", amount=50)]
+        )
+        return
+
+    # --- 2. USERNI BAZAGA YOZISH ---
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    user = cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
     
-    # Foydalanuvchi bazada bor-yo'qligini tekshirish
-    user = cursor.execute("SELECT user_id FROM users WHERE user_id = ?", (user_id,)).fetchone()
-    
+    msg_text = ""
     if not user:
-        # Yangi foydalanuvchini ro'yxatdan o'tkazish
-        cursor.execute("INSERT INTO users (user_id, balance, referred_by) VALUES (?, 100, ?)", (user_id, referrer_id))
+        cursor.execute("INSERT INTO users (user_id, full_name, balance, food, level, xp, last_online, invites) VALUES (?, ?, 10, 5, 1, 0, ?, 0)", (user_id, full_name, now))
+        msg_text = f"👋 Salom, {full_name}!\n🌾 <b>Fermangiz ochildi!</b>"
         
-        # Taklif qilgan odamga 50 FAM coin bonus berish
-        if referrer_id != 0 and referrer_id != user_id:
-            cursor.execute("UPDATE users SET balance = balance + 50 WHERE user_id = ?", (referrer_id,))
-            try:
-                await bot.send_message(referrer_id, "🎁 **Yangi fermer qo'shildi!**\nSizga 50 FAM bonus berildi! 💰")
-            except:
-                pass
+        # Referral
+        if payload and payload.isdigit():
+            referrer_id = int(payload)
+            if referrer_id != user_id:
+                ref_user = cursor.execute("SELECT user_id FROM users WHERE user_id=?", (referrer_id,)).fetchone()
+                if ref_user:
+                    cursor.execute("UPDATE users SET balance=balance+500, food=food+5, invites=invites+1 WHERE user_id=?", (referrer_id,))
+                    cursor.execute("UPDATE users SET balance=balance+100 WHERE user_id=?", (user_id,))
+                    try: await bot.send_message(referrer_id, f"🎉 <b>Do'stingiz {full_name} qo'shildi!</b>\nSizga +500 FAM va +5 Yem berildi.")
+                    except: pass
+                    msg_text += "\n🎁 <b>Referral bonusi:</b> +100 FAM!"
         conn.commit()
+    else:
+        cursor.execute("UPDATE users SET full_name=?, last_online=? WHERE user_id=?", (full_name, now, user_id))
+        conn.commit()
+        msg_text = f"🏡 <b>Fermaga xush kelibsiz!</b>"
+
     conn.close()
+
+    bot_username = (await bot.get_me()).username
+    kb = InlineKeyboardBuilder()
     
-    url = get_url_with_params(user_id)
-    bot_info = await bot.get_me()
-    ref_link = f"https://t.me/{bot_info.username}?start={user_id}" 
+    # TUGMALAR
+    kb.row(types.InlineKeyboardButton(text="🚜 O'yinni Boshlash", web_app=types.WebAppInfo(url=get_game_url(user_id))))
+    kb.row(types.InlineKeyboardButton(text="🔄 Yangilash", callback_data="refresh"), types.InlineKeyboardButton(text="🏆 Reyting", callback_data="top_10"))
+    kb.row(types.InlineKeyboardButton(text="🎁 Bonus", callback_data="daily_bonus"), types.InlineKeyboardButton(text="🔗 Do'stlar", callback_data="invite_friends"))
+    # Deep Link To'lov Tugmalari
+    kb.row(types.InlineKeyboardButton(text="🔥 Aksiya (100⭐️)", url=f"https://t.me/{bot_username}?start=buy_special"))
+    kb.row(types.InlineKeyboardButton(text="💰 1000 FAM (50⭐️)", url=f"https://t.me/{bot_username}?start=buy_coins"))
 
-    # Menyu tugmasini yangi URL bilan sozlash
-    await bot.set_chat_menu_button(
-        chat_id=message.chat.id,
-        menu_button=types.MenuButtonWebApp(text="Ferma 🚜", web_app=types.WebAppInfo(url=url))
-    )
-    
-    builder = InlineKeyboardBuilder()
-    builder.row(types.InlineKeyboardButton(text="🚜 Fermaga kirish (v2.0)", web_app=types.WebAppInfo(url=url)))
-    builder.row(types.InlineKeyboardButton(text="⭐ 1000 FAM olish (50 XTR)", callback_data="buy_1000_fam"))
-    builder.row(types.InlineKeyboardButton(text="🔗 Do'stlarni taklif qilish", switch_inline_query=f"\nMen bilan Hay Day o'yna! Har bir do'st uchun 50 FAM bonus! 👇\n{ref_link}"))
-    
-    await message.answer(f"🏡 **HAY DAY: GOLDEN EDITION**\n\nFermangiz yangi dizaynda tayyor! Do'stlarni chaqiring va Stars orqali tezroq rivojlaning. 💰", 
-                         reply_markup=builder.as_markup(), parse_mode="Markdown")
+    await message.answer(msg_text, reply_markup=kb.as_markup())
 
-# --- TELEGRAM STARS TO'LOV TIZIMI ---
-
-@dp.callback_query(F.data == "buy_1000_fam")
-async def send_payment_invoice(callback: types.CallbackQuery):
-    prices = [types.LabeledPrice(label="1000 FAM Coin", amount=50)] 
-    await bot.send_invoice(
-        chat_id=callback.from_user.id,
-        title="Fermani rivojlantirish",
-        description="Fermangiz uchun 1000 ta oltin FAM coin sotib oling!",
-        payload="stars_1000_fam",
-        provider_token="", 
-        currency="XTR", # Telegram Stars valyutasi
-        prices=prices
-    )
-
+# ================== TO'LOV HANDLERLARI (MUHIM) ==================
 @dp.pre_checkout_query()
-async def process_pre_checkout(pre_checkout_query: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+async def pre_check(q):
+    # To'lovni tasdiqlash
+    await bot.answer_pre_checkout_query(q.id, ok=True)
 
 @dp.message(F.successful_payment)
-async def handle_successful_payment(message: types.Message):
-    user_id = message.from_user.id
-    payload = message.successful_payment.invoice_payload
-    if payload == "stars_1000_fam":
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET balance = balance + 1000 WHERE user_id = ?", (user_id,))
-        conn.commit()
-        conn.close()
-        await message.answer("✅ **Muvaffaqiyatli!**\nBalansingizga 1000 FAM qo'shildi. O'yinni qayta ochishingiz mumkin. 💰")
+async def success_pay(m):
+    user_id = m.from_user.id
+    payload = m.successful_payment.invoice_payload
+    conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+    
+    msg = ""
+    if payload == "pack_1000_fam":
+        cursor.execute("UPDATE users SET balance = balance + 1000, food = food + 10 WHERE user_id = ?", (user_id,))
+        msg = "🎉 <b>To'lov Muvaffaqiyatli!</b>\n+1000 FAM va +10 Yem."
+        
+    elif payload == "special_offer_pack":
+        cursor.execute("UPDATE users SET balance = balance + 5000, food = food + 50 WHERE user_id = ?", (user_id,))
+        u = cursor.execute("SELECT inventory FROM users WHERE user_id=?", (user_id,)).fetchone()
+        inv = json.loads(u[0])
+        inv['cow'] = inv.get('cow', 0) + 1
+        cursor.execute("UPDATE users SET inventory=? WHERE user_id=?", (json.dumps(inv), user_id))
+        msg = "🔥 <b>SUPER AKSIYA MUBORAK!</b>\n💰 5000 FAM\n🌾 50 Yem\n🐄 1 Sigir qo'shildi!"
 
-# --- O'YIN MA'LUMOTLARINI SAQLASH ---
+    conn.commit(); conn.close()
+    await m.answer(msg)
 
+# ================== WEBAPP (MARKET) ==================
 @dp.message(F.web_app_data)
-async def handle_save(message: types.Message):
+async def handle_webapp(message: types.Message):
     try:
         data = json.loads(message.web_app_data.data)
-        
-        # Mini App ichidan Stars xaridi so'rovi kelsa
-        if data.get("action") == "stars_purchase":
-            prices = [types.LabeledPrice(label="1000 FAM Coin", amount=50)] 
-            await bot.send_invoice(chat_id=message.chat.id, title="1000 FAM", description="Tezkor xarid", payload="stars_1000_fam", provider_token="", currency="XTR", prices=prices)
-            return
+        user_id = message.from_user.id
+        full_name = html.escape(message.from_user.full_name)
+        now = int(time.time())
+        conn = sqlite3.connect(DB_PATH); cursor = conn.cursor()
+        action = data.get("action")
 
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET balance = ?, inventory = ?, warehouse = ? WHERE user_id = ?", 
-                       (int(data.get("balance", 100)), data.get("inventory", ""), data.get("warehouse", "E:0,W:0,M:0"), message.from_user.id))
-        conn.commit()
+        if action == "sell_market":
+            item=data.get("item"); qty=int(data.get("qty")); price=int(data.get("price"))
+            u=cursor.execute("SELECT warehouse FROM users WHERE user_id=?",(user_id,)).fetchone()
+            wh=json.loads(u[0])
+            if wh.get(item,0)>=qty:
+                wh[item]-=qty
+                cursor.execute("UPDATE users SET warehouse=? WHERE user_id=?",(json.dumps(wh),user_id))
+                cursor.execute("INSERT INTO market (seller_id,seller_name,item_type,quantity,price,date) VALUES (?,?,?,?,?,?)",(user_id,full_name,item,qty,price,now))
+                conn.commit()
+                await message.answer(f"✅ <b>Sotuvga:</b> {qty}x {item}")
+            else: await message.answer("❌ Yetmaydi!")
+
+        elif action == "buy_market":
+            m_id=int(data.get("market_id"))
+            deal=cursor.execute("SELECT seller_id,item_type,quantity,price FROM market WHERE id=?",(m_id,)).fetchone()
+            if deal:
+                sid,item,qty,price=deal
+                if sid == user_id: 
+                    await message.answer("❌ O'zingizdan ololmaysiz!"); conn.close(); return
+                
+                buyer=cursor.execute("SELECT balance,warehouse FROM users WHERE user_id=?",(user_id,)).fetchone()
+                if buyer[0]>=price:
+                    cursor.execute("UPDATE users SET balance=balance-? WHERE user_id=?",(price,user_id))
+                    wh=json.loads(buyer[1]); wh[item]=wh.get(item,0)+qty
+                    cursor.execute("UPDATE users SET warehouse=? WHERE user_id=?",(json.dumps(wh),user_id))
+                    cursor.execute("UPDATE users SET balance=balance+? WHERE user_id=?",(price,sid))
+                    cursor.execute("DELETE FROM market WHERE id=?",(m_id,)); conn.commit()
+                    await message.answer(f"✅ <b>Olindi:</b> {qty}x {item}")
+                else: await message.answer("❌ Pul yo'q!")
+            else: await message.answer("❌ Sotilgan!")
+        
+        else: # Auto Save
+            inv={}; wh={"eggs":0,"wool":0,"meat":0}
+            if data.get("inventory"):
+                for i in data.get("inventory").split(','):
+                    if ':' in i: k,v=i.split(':'); inv[k]=int(v)
+            if data.get("warehouse"):
+                for p in data.get("warehouse").split(','):
+                    if ':' in p: k,v=p.split(':'); km={'E':'eggs','W':'wool','M':'meat'}; wh[km.get(k,k)]=int(v)
+            
+            cursor.execute("UPDATE users SET full_name=?, balance=?, inventory=?, warehouse=?, food=?, level=?, xp=?, last_online=? WHERE user_id=?", 
+                           (full_name, int(data.get("balance",0)), json.dumps(inv), json.dumps(wh), int(data.get("food",0)), int(data.get("level",1)), int(data.get("xp",0)), now, user_id))
+            conn.commit()
         conn.close()
-        await message.answer(f"💾 **Holat saqlandi!**")
-    except Exception as e:
-        logging.error(f"Xato: {e}")
+    except Exception as e: logging.error(e)
+
+# ================== CALLBACKS ==================
+@dp.callback_query(F.data == "refresh")
+async def r(c): 
+    dummy = CommandObject(prefix="/", command="start", args=None)
+    await start(c.message, dummy)
+    await c.message.delete()
+
+@dp.callback_query(F.data == "top_10")
+async def t(c):
+    conn = sqlite3.connect(DB_PATH); top = conn.cursor().execute("SELECT full_name, balance FROM users ORDER BY balance DESC LIMIT 10").fetchall(); conn.close()
+    text = "🏆 <b>TOP 10</b>\n" + "\n".join([f"{i+1}. {html.escape(u[0])} - {u[1]}" for i, u in enumerate(top)])
+    kb = InlineKeyboardBuilder(); kb.row(types.InlineKeyboardButton(text="⬅️ Orqaga", callback_data="refresh"))
+    await c.message.edit_text(text, reply_markup=kb.as_markup())
+
+@dp.callback_query(F.data == "daily_bonus")
+async def b(c):
+    uid = c.from_user.id; now = int(time.time()); conn = sqlite3.connect(DB_PATH); cur = conn.cursor()
+    u = cur.execute("SELECT last_bonus_time FROM users WHERE user_id=?", (uid,)).fetchone()
+    last = u[0] if u else 0
+    if now - last >= 86400:
+        cur.execute("UPDATE users SET balance=balance+100, last_bonus_time=? WHERE user_id=?", (now, uid)); conn.commit(); await c.answer("✅ +100 FAM!", show_alert=True)
+    else: await c.answer("⏳ Vaqt bo'lmadi", show_alert=True)
+    conn.close()
+
+@dp.callback_query(F.data == "invite_friends")
+async def i(c): 
+    kb = InlineKeyboardBuilder(); kb.row(types.InlineKeyboardButton(text="⬅️ Orqaga", callback_data="refresh"))
+    await c.message.edit_text(f"🔗 Ssilka:\n<code>https://t.me/{(await bot.get_me()).username}?start={c.from_user.id}</code>", reply_markup=kb.as_markup())
 
 async def main():
     init_db()
+    print("Bot ishga tushdi...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try: asyncio.run(main())
+    except KeyboardInterrupt: print("Bot to'xtatildi")
