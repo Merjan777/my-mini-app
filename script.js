@@ -81,26 +81,23 @@ function createAnimalCard(type, index, container) {
     const card = document.createElement("div");
     card.className = "card";
     const barId = `bar-${index}`;
-    const imgId = `img-${index}`;
+    const iconId = `icon-${index}`;
     
-    let imgUrl = '';
-    if(type=='chicken') imgUrl = 'https://cdn-icons-png.flaticon.com/512/1828/1828884.png';
-    if(type=='sheep') imgUrl = 'https://cdn-icons-png.flaticon.com/512/1998/1998610.png';
-    if(type=='cow') imgUrl = 'https://cdn-icons-png.flaticon.com/512/1998/1998627.png';
+    // EMOJINI TANLASH
+    let emoji = type=='chicken'?'🐔':(type=='sheep'?'🐑':'🐄');
 
     card.innerHTML = `
-        <img src="${imgUrl}" class="animal-img" id="${imgId}">
+        <div class="animal-icon" id="${iconId}">${emoji}</div>
         <div class="progress-container"><div class="progress-fill" id="${barId}"></div></div>
     `;
     container.appendChild(card);
 
     animalTimers.push({
-        id: barId, imgId: imgId, type: type,
+        id: barId, iconId: iconId, type: type,
         progress: Math.random() * 80, speed: 100 / (CONFIG[type].time * 10)
     });
 }
 
-// O'YIN TAYMERI
 setInterval(() => {
     if (currentView !== 'building') return;
     animalTimers.forEach(animal => {
@@ -112,8 +109,9 @@ setInterval(() => {
                 animal.progress = 0;
                 produceItem(animal.type);
                 updateUI();
-                document.getElementById(animal.imgId).classList.add('pop');
-                setTimeout(()=>document.getElementById(animal.imgId).classList.remove('pop'), 300);
+                // Emojini sakratish
+                document.getElementById(animal.iconId).classList.add('pop');
+                setTimeout(()=>document.getElementById(animal.iconId).classList.remove('pop'), 300);
             } else { animal.progress = 99; }
         }
         const bar = document.getElementById(animal.id);
@@ -150,11 +148,8 @@ function buyFood() {
     } else tg.showAlert("Pul yetmaydi!");
 }
 
-// HAQIQIY PULGA SOTIB OLISH (Stars)
 function buyRealMoney() {
-    tg.sendData(JSON.stringify({
-        action: "buy_stars_pack"
-    }));
+    tg.sendData(JSON.stringify({ action: "buy_stars_pack" }));
     tg.close();
 }
 

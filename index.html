@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Katta Ferma</title>
+    <title>Emoji Ferma</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,90 +11,69 @@
 
     <div class="header">
         <div style="display: flex; gap: 15px;">
-            <div class="header-item">
-                <img src="https://cdn-icons-png.flaticon.com/512/246/246172.png" class="coin-img" alt="coin">
-                <span id="balance" class="coin-text">0</span>
-            </div>
-            <div class="header-item">
-                <img src="https://cdn-icons-png.flaticon.com/512/2917/2917995.png" class="food-img" alt="food">
-                <span id="food" class="food-text">0</span>
-            </div>
+            <div class="header-item">💰 <span id="balance" style="color:#ffd700">0</span></div>
+            <div class="header-item">🌾 <span id="food" style="color:#ffab40">0</span></div>
         </div>
         <div class="header-item" onclick="saveGame()" style="cursor: pointer; background: #66bb6a; padding: 5px 10px; border-radius: 8px; border-bottom: 3px solid #388e3c;">
-            <img src="https://cdn-icons-png.flaticon.com/512/2874/2874091.png" class="coin-img" alt="save">
-            <span>Saqlash</span>
+            💾 Saqlash
         </div>
     </div>
 
     <div id="map-view">
-        <h3 class="map-title">FERMA XARITASI</h3>
+        <h3 class="map-title">FERMA XARITASI 🗺</h3>
         <div class="map-grid">
             <div class="building" onclick="openBuilding('chicken')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047728.png" class="b-img">
+                <span class="b-icon">🛖</span>
                 <div class="b-name">Tovuqxona</div>
                 <div class="b-count" id="count-chicken">0</div>
             </div>
             <div class="building" onclick="openBuilding('sheep')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047879.png" class="b-img">
+                <span class="b-icon">🏚</span>
                 <div class="b-name">Qo'yxona</div>
                 <div class="b-count" id="count-sheep">0</div>
             </div>
             <div class="building" onclick="openBuilding('cow')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047936.png" class="b-img">
+                <span class="b-icon">🏠</span>
                 <div class="b-name">Molxona</div>
                 <div class="b-count" id="count-cow">0</div>
             </div>
             <div class="building" onclick="openShop()">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047656.png" class="b-img">
+                <span class="b-icon">🏪</span>
                 <div class="b-name">Bozor & Yem</div>
             </div>
         </div>
     </div>
 
     <div id="interior-view">
-        <button class="back-btn" onclick="showMap()">
-            <img src="https://cdn-icons-png.flaticon.com/512/271/271220.png" width="20" style="filter: invert(1);">
-            Xaritaga qaytish
-        </button>
+        <button class="back-btn" onclick="showMap()">⬅️ Xaritaga qaytish</button>
         <h3 id="room-title" class="map-title">Xona</h3>
         <div class="farm-grid" id="farm-grid"></div>
     </div>
 
     <div class="controls">
-        <button class="ctrl-btn" onclick="openShop()">
-            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="btn-icon">
-            Do'kon
-        </button>
-        <button class="ctrl-btn ctrl-save" onclick="sellAll()">
-            <img src="https://cdn-icons-png.flaticon.com/512/246/246172.png" class="btn-icon">
-            Sotish
-        </button>
+        <button class="ctrl-btn" onclick="openShop()">🛒 Do'kon</button>
+        <button class="ctrl-btn ctrl-save" onclick="sellAll()">💰 Sotish</button>
     </div>
 
     <div id="shop-modal">
         <h3 style="text-align: center; margin-top: 0; font-size: 24px;">Fermer Do'koni</h3>
         <div class="shop-row">
             <button class="btn-buy-anim" onclick="buyAnimal('chicken', 10)">
-                <div style="display: flex; align-items: center;"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" class="shop-anim-img"> Tovuq</div>
-                <span>10 💰</span>
+                <div>🐔 Tovuq</div> <span>10 💰</span>
             </button>
             <button class="btn-buy-anim" onclick="buyAnimal('sheep', 150)">
-                <div style="display: flex; align-items: center;"><img src="https://cdn-icons-png.flaticon.com/512/1998/1998610.png" class="shop-anim-img"> Qo'y</div>
-                <span>150 💰</span>
+                <div>🐑 Qo'y</div> <span>150 💰</span>
             </button>
             <button class="btn-buy-anim" onclick="buyAnimal('cow', 500)">
-                <div style="display: flex; align-items: center;"><img src="https://cdn-icons-png.flaticon.com/512/1998/1998627.png" class="shop-anim-img"> Sigir</div>
-                <span>500 💰</span>
+                <div>🐄 Sigir</div> <span>500 💰</span>
             </button>
             <hr style="border-color: #5d4037;">
             <button class="btn-buy-food" onclick="buyFood()">
-                <div style="display: flex; align-items: center;"><img src="https://cdn-icons-png.flaticon.com/512/2917/2917995.png" class="shop-anim-img"> 5 ta YEM</div>
-                <span>2 💰</span>
+                <div>🌾 5 ta YEM</div> <span>2 💰</span>
             </button>
             
             <button class="btn-donate" onclick="buyRealMoney()">
-                <div style="display: flex; align-items: center;">⭐ 1000 FAM + 10 YEM</div>
-                <span>50 Stars</span>
+                <div>⭐ 1000 FAM + 10 YEM</div> <span>50 Stars</span>
             </button>
 
             <button class="shop-row close-shop" onclick="closeShop()">Yopish ❌</button>
