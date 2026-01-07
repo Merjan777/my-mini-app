@@ -34,12 +34,12 @@ let currentView = 'map';
 // Bot esa darhol to'lov chekini chiqarib beradi. 100% Ishlaydi.
 
 function buySpecialOffer() {
-    tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=buy_special_offer`);
+    tg.openTelegramLink(`https://t.me/${SkinTycoonBot}?start=buy_special_offer`);
     tg.close();
 }
 
 function buyRealMoney() {
-    tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=buy_stars_pack`);
+    tg.openTelegramLink(`https://t.me/${SkinTycoonBot}?start=buy_stars_pack`);
     tg.close();
 }
 
