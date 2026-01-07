@@ -5,7 +5,7 @@ const urlParams = new URLSearchParams(window.location.search);
 // ====================================================================
 // 🚨 MUHIM: BOTINGIZNING USERNAMESINI SHU YERGA YOZING (Kuchukchasiz)
 // Masalan: const BOT_USERNAME = "FermerBoyBot";
-const BOT_USERNAME = "BotingizUsernamesiniYozing"; 
+const BOT_USERNAME = "SkinTycoonBot"; 
 // ====================================================================
 
 // SOZLAMALAR
