@@ -170,6 +170,32 @@ function produceItem(type) {
 function openShop() { document.getElementById("shop-modal").style.display = "block"; }
 function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
 
+// --- YANGI: BOZORGA SOTISH ---
+function sellToMarket() {
+    let item = document.getElementById("sell-item").value;
+    let price = parseInt(document.getElementById("sell-price").value);
+
+    // Tekshirishlar
+    if (!price || price <= 0) {
+        tg.showAlert("❌ Iltimos, to'g'ri narx yozing!");
+        return;
+    }
+    if (game.warehouse[item] <= 0) {
+        tg.showAlert("❌ Sizda sotish uchun bu mahsulot yo'q!");
+        return;
+    }
+
+    // Botga ma'lumot yuborish
+    tg.sendData(JSON.stringify({
+        action: "sell_market",
+        item: item,
+        price: price
+    }));
+    
+    // Web App yopiladi
+    tg.close(); 
+}
+
 function buyAnimal(type, price) {
     if (game.level < CONFIG[type].levelReq) {
         tg.showAlert(`🔒 Bu hayvon ${CONFIG[type].levelReq}-levelda ochiladi!`);
