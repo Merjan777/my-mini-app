@@ -2,6 +2,12 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 const urlParams = new URLSearchParams(window.location.search);
 
+// ====================================================================
+// 🚨 MUHIM: BOTINGIZNING USERNAMESINI SHU YERGA YOZING (Kuchukchasiz)
+// Masalan: const BOT_USERNAME = "FermerBoyBot";
+const BOT_USERNAME = "BotingizUsernamesiniYozing"; 
+// ====================================================================
+
 // SOZLAMALAR
 const CONFIG = {
     chicken: { time: 3, food: 1, name: "TOVUQXONA", levelReq: 1, xpReward: 10 },
@@ -17,13 +23,46 @@ let game = {
     warehouse: parseWarehouse(urlParams.get('w')),
     level: parseInt(urlParams.get('l')) || 1, 
     xp: parseInt(urlParams.get('x')) || 0,
-    marketData: parseMarketData(urlParams.get('m')) // Bozor ma'lumotlari
+    marketData: parseMarketData(urlParams.get('m'))
 };
 
 let animalTimers = [];
 let currentView = 'map'; 
 
-// --- 1. PARSING FUNKSIYALARI ---
+// ================== TO'LOV TIZIMI (DEEP LINK) ==================
+// Bu usul Web Appni yopadi va botga start komandasini yuboradi.
+// Bot esa darhol to'lov chekini chiqarib beradi. 100% Ishlaydi.
+
+function buySpecialOffer() {
+    tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=buy_special_offer`);
+    tg.close();
+}
+
+function buyRealMoney() {
+    tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=buy_stars_pack`);
+    tg.close();
+}
+
+// ================== AKSIYA VA MODALLAR ==================
+function openSpecialOffer() {
+    document.getElementById("special-offer-modal").style.display = "flex";
+}
+
+function closeSpecialOffer() {
+    document.getElementById("special-offer-modal").style.display = "none";
+}
+
+// O'yinga kirganda avtomatik taklif (Agar level kichik bo'lsa)
+setTimeout(() => {
+    if (game.level < 5) {
+        openSpecialOffer();
+    }
+}, 1500);
+
+function openShop() { document.getElementById("shop-modal").style.display = "block"; }
+function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
+
+// ================== PARSING (MA'LUMOTLARNI O'QISH) ==================
 function parseInventory(str) {
     if (!str) return {};
     let inv = {};
@@ -46,7 +85,6 @@ function parseWarehouse(str) {
 
 function parseMarketData(str) {
     if (!str) return [];
-    // Format: id:name:type:qty:price|...
     return str.split('|').map(item => {
         let p = item.split(':');
         if(p.length < 5) return null;
@@ -54,33 +92,10 @@ function parseMarketData(str) {
     }).filter(item => item !== null);
 }
 
-// --- 2. SUPER AKSIYA (MARKETING) ---
-function openSpecialOffer() {
-    document.getElementById("special-offer-modal").style.display = "flex";
-}
-
-function closeSpecialOffer() {
-    document.getElementById("special-offer-modal").style.display = "none";
-}
-
-function buySpecialOffer() {
-    tg.sendData(JSON.stringify({ action: "buy_special_offer" }));
-    tg.close();
-}
-
-// O'yinga kirganda avtomatik taklif qilish (Agar 5-leveldan kichik bo'lsa)
-setTimeout(() => {
-    if (game.level < 5) {
-        openSpecialOffer();
-    }
-}, 1500);
-
-// --- 3. BOZOR LOGIKASI ---
+// ================== BOZOR LOGIKASI ==================
 function showMarket() {
     currentView = 'market';
-    // Barcha oynalarni yashirish
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-    // Bozorni ko'rsatish
     document.getElementById('market-view').style.display = 'block';
     renderMarketList();
     updateUI();
@@ -91,7 +106,7 @@ function renderMarketList() {
     list.innerHTML = "";
     
     if (game.marketData.length === 0) {
-        list.innerHTML = "<p style='text-align:center; color:#888; padding: 20px;'>Hozircha bozor bo'sh...</p>";
+        list.innerHTML = "<p style='text-align:center; color:#ddd; padding: 20px;'>Bozor bo'sh...</p>";
         return;
     }
 
@@ -128,6 +143,7 @@ function sellToMarket() {
         return; 
     }
 
+    // Bozorda sotish uchun Invoice shart emas, shuning uchun sendData ishlaydi
     tg.sendData(JSON.stringify({ 
         action: "sell_market", 
         item: item, 
@@ -138,7 +154,7 @@ function sellToMarket() {
 }
 
 function buyFromMarket(id) {
-    tg.showConfirm("Sotib olasizmi?", (confirmed) => {
+    tg.showConfirm("Haqiqatan ham sotib olasizmi?", (confirmed) => {
         if(confirmed) {
             tg.sendData(JSON.stringify({ action: "buy_market", market_id: id }));
             tg.close();
@@ -146,7 +162,7 @@ function buyFromMarket(id) {
     });
 }
 
-// --- 4. ASOSIY KO'RINISH LOGIKASI ---
+// ================== O'YIN MEXANIKASI ==================
 function showMap() {
     currentView = 'map';
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
@@ -174,7 +190,6 @@ function updateUI() {
     document.getElementById("stat-wool").innerText = game.warehouse.wool || 0;
     document.getElementById("stat-meat").innerText = game.warehouse.meat || 0;
 
-    // XP va Level
     let xpReq = game.level * 100;
     document.getElementById("level").innerText = game.level;
     document.getElementById("xp").innerText = game.xp + " / " + xpReq;
@@ -221,27 +236,23 @@ function createAnimalCard(type, index, container) {
     });
 }
 
-// --- 5. O'YIN LOOP (Mantiq) ---
+// Loop
 setInterval(() => {
     if (currentView !== 'building') return;
     
     animalTimers.forEach(animal => {
-        // Hayvon o'sishi
         if (game.food > 0) { animal.progress += animal.speed; }
         
-        // Mahsulot berish
         if (animal.progress >= 100) {
             let cost = CONFIG[animal.type].food;
             if (game.food >= cost) {
                 game.food -= cost;
                 animal.progress = 0;
                 
-                // Mahsulot qo'shish
                 if (animal.type === 'chicken') game.warehouse.eggs++;
                 if (animal.type === 'sheep') game.warehouse.wool++;
                 if (animal.type === 'cow') game.warehouse.meat++;
                 
-                // XP qo'shish
                 game.xp += CONFIG[animal.type].xpReward;
                 let nextLvl = game.level * 100;
                 if(game.xp >= nextLvl) {
@@ -252,11 +263,10 @@ setInterval(() => {
 
                 updateUI();
                 
-                // Animatsiya
                 document.getElementById(animal.iconId).classList.add('pop');
                 setTimeout(()=>document.getElementById(animal.iconId).classList.remove('pop'), 300);
             } else { 
-                animal.progress = 99; // Yem yetmasa kutib turadi
+                animal.progress = 99; 
             }
         }
         
@@ -265,10 +275,7 @@ setInterval(() => {
     });
 }, 100);
 
-// --- 6. DO'KON VA BOSHQA FUNKSIYALAR ---
-function openShop() { document.getElementById("shop-modal").style.display = "block"; }
-function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
-
+// ================== DO'KON VA ACTIONS ==================
 function buyAnimal(type, price) {
     if (game.level < CONFIG[type].levelReq) {
         tg.showAlert(`🔒 Bu hayvon ${CONFIG[type].levelReq}-levelda ochiladi!`);
@@ -293,11 +300,6 @@ function buyFood() {
     } else tg.showAlert("Pul yetmaydi!");
 }
 
-function buyRealMoney() {
-    tg.sendData(JSON.stringify({ action: "buy_stars_pack" }));
-    tg.close();
-}
-
 function sellAll() {
     let income = (game.warehouse.eggs * 2) + (game.warehouse.wool * 30) + (game.warehouse.meat * 100);
     if (income > 0) {
@@ -317,5 +319,5 @@ function saveGame() {
     }));
 }
 
-// Boshlang'ich yangilash
+// Boshlash
 updateUI();
