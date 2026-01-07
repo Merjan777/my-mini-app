@@ -10,12 +10,18 @@
 <body>
 
     <div class="header">
-        <div style="display: flex; gap: 15px;">
+        <div class="header-top">
             <div class="header-item">💰 <span id="balance" style="color:#ffd700">0</span></div>
             <div class="header-item">🌾 <span id="food" style="color:#ffab40">0</span></div>
+            <div onclick="saveGame()" style="cursor: pointer; background: #66bb6a; padding: 5px 10px; border-radius: 8px; border-bottom: 3px solid #388e3c; color: white;">
+                💾
+            </div>
         </div>
-        <div class="header-item" onclick="saveGame()" style="cursor: pointer; background: #66bb6a; padding: 5px 10px; border-radius: 8px; border-bottom: 3px solid #388e3c;">
-            💾 Saqlash
+        <div>
+            <div class="xp-container">
+                <div class="xp-fill" id="xp-bar"></div>
+            </div>
+            <div class="level-text">LEVEL <span id="level">1</span> (<span id="xp">0</span> XP)</div>
         </div>
     </div>
 
@@ -68,10 +74,10 @@
                 <div>🐔 Tovuq</div> <span>10 💰</span>
             </button>
             <button class="btn-buy-anim" onclick="buyAnimal('sheep', 150)">
-                <div>🐑 Qo'y</div> <span>150 💰</span>
+                <div>🐑 Qo'y (Lvl 3)</div> <span>150 💰</span>
             </button>
             <button class="btn-buy-anim" onclick="buyAnimal('cow', 500)">
-                <div>🐄 Sigir</div> <span>500 💰</span>
+                <div>🐄 Sigir (Lvl 5)</div> <span>500 💰</span>
             </button>
             <hr style="border-color: #5d4037;">
             <button class="btn-buy-food" onclick="buyFood()">

@@ -2,17 +2,20 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 const urlParams = new URLSearchParams(window.location.search);
 
+// SOZLAMALAR: Level talabi va XP mukofoti
 const CONFIG = {
-    chicken: { time: 3, food: 1, name: "TOVUQXONA" },
-    sheep:   { time: 5, food: 2, name: "QO'YXONA" },
-    cow:     { time: 8, food: 3, name: "MOLXONA" }
+    chicken: { time: 3, food: 1, name: "TOVUQXONA", levelReq: 1, xpReward: 10 },
+    sheep:   { time: 5, food: 2, name: "QO'YXONA", levelReq: 3, xpReward: 20 },
+    cow:     { time: 8, food: 3, name: "MOLXONA", levelReq: 5, xpReward: 50 }
 };
 
 let game = {
     balance: parseInt(urlParams.get('b')) || 10,
     food: parseInt(urlParams.get('f')) || 5,
     inventory: parseInventory(urlParams.get('i')),
-    warehouse: parseWarehouse(urlParams.get('w'))
+    warehouse: parseWarehouse(urlParams.get('w')),
+    level: parseInt(urlParams.get('l')) || 1, // YANGI
+    xp: parseInt(urlParams.get('x')) || 0     // YANGI
 };
 
 let animalTimers = [];
@@ -36,19 +39,38 @@ function parseWarehouse(str) {
 }
 function getFullKey(k) { if(k=='E')return 'eggs'; if(k=='W')return 'wool'; if(k=='M')return 'meat'; return k; }
 
+// --- YANGI: XP HISOBLASH ---
+function getXpForNextLevel() { return game.level * 100; }
+
+function addXp(amount) {
+    game.xp += amount;
+    let nextLvl = getXpForNextLevel();
+    if (game.xp >= nextLvl) {
+        game.xp -= nextLvl;
+        game.level++;
+        tg.showAlert(`🎉 LEVEL UP! Siz endi ${game.level}-levelsiz!`);
+    }
+    updateUI();
+}
+
 function updateUI() {
     document.getElementById("balance").innerText = Math.floor(game.balance);
     document.getElementById("food").innerText = game.food;
     
-    // Binolar ustidagi sonlar
     document.getElementById("count-chicken").innerText = game.inventory.chicken || 0;
     document.getElementById("count-sheep").innerText = game.inventory.sheep || 0;
     document.getElementById("count-cow").innerText = game.inventory.cow || 0;
 
-    // YANGI: Ombor statistikasi yangilanishi
+    // Ombor statistikasi
     document.getElementById("stat-egg").innerText = game.warehouse.eggs || 0;
     document.getElementById("stat-wool").innerText = game.warehouse.wool || 0;
     document.getElementById("stat-meat").innerText = game.warehouse.meat || 0;
+
+    // Level va Bar
+    document.getElementById("level").innerText = game.level;
+    document.getElementById("xp").innerText = game.xp + " / " + getXpForNextLevel();
+    let percent = (game.xp / getXpForNextLevel()) * 100;
+    document.getElementById("xp-bar").style.width = percent + "%";
 }
 
 function showMap() {
@@ -89,19 +111,10 @@ function createAnimalCard(type, index, container) {
     card.className = "card";
     const barId = `bar-${index}`;
     const iconId = `icon-${index}`;
-    
     let emoji = type=='chicken'?'🐔':(type=='sheep'?'🐑':'🐄');
-
-    card.innerHTML = `
-        <div class="animal-icon" id="${iconId}">${emoji}</div>
-        <div class="progress-container"><div class="progress-fill" id="${barId}"></div></div>
-    `;
+    card.innerHTML = `<div class="animal-icon" id="${iconId}">${emoji}</div><div class="progress-container"><div class="progress-fill" id="${barId}"></div></div>`;
     container.appendChild(card);
-
-    animalTimers.push({
-        id: barId, iconId: iconId, type: type,
-        progress: Math.random() * 80, speed: 100 / (CONFIG[type].time * 10)
-    });
+    animalTimers.push({id: barId, iconId: iconId, type: type, progress: Math.random() * 80, speed: 100 / (CONFIG[type].time * 10)});
 }
 
 setInterval(() => {
@@ -114,6 +127,7 @@ setInterval(() => {
                 game.food -= cost;
                 animal.progress = 0;
                 produceItem(animal.type);
+                addXp(CONFIG[animal.type].xpReward); // XP QO'SHISH
                 updateUI();
                 document.getElementById(animal.iconId).classList.add('pop');
                 setTimeout(()=>document.getElementById(animal.iconId).classList.remove('pop'), 300);
@@ -134,6 +148,10 @@ function openShop() { document.getElementById("shop-modal").style.display = "blo
 function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
 
 function buyAnimal(type, price) {
+    if (game.level < CONFIG[type].levelReq) { // LEVEL TEKSHIRISH
+        tg.showAlert(`🔒 Bu hayvon ${CONFIG[type].levelReq}-levelda ochiladi!`);
+        return;
+    }
     if (game.balance >= price) {
         game.balance -= price;
         game.inventory[type] = (game.inventory[type] || 0) + 1;
@@ -172,7 +190,8 @@ function saveGame() {
     let invStr = Object.entries(game.inventory).map(([k,v]) => `${k}:${v}`).join(',');
     let warStr = `E:${game.warehouse.eggs},W:${game.warehouse.wool},M:${game.warehouse.meat}`;
     tg.sendData(JSON.stringify({
-        balance: game.balance, inventory: invStr, warehouse: warStr, food: game.food
+        balance: game.balance, inventory: invStr, warehouse: warStr, food: game.food,
+        level: game.level, xp: game.xp
     }));
 }
 updateUI();

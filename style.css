@@ -15,24 +15,43 @@ body {
     font-family: 'Segoe UI', sans-serif;
     color: white; user-select: none;
     overflow-x: hidden;
-    padding-bottom: 90px;
+    padding-bottom: 90px; /* Pastki menyu uchun joy */
 }
 
-/* HEADER */
+/* HEADER: Asosiy qism */
 .header {
     background: #4e342e; border: 3px solid #3e2723;
     border-radius: 15px; padding: 10px 15px;
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 10px;
+    display: flex; flex-direction: column; /* Elementlar ustma-ust */
+    gap: 8px; margin-bottom: 10px;
     position: sticky; top: 0; z-index: 100; 
     box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }
+
+/* Header ichidagi yuqori qator (Pul, Yem, Save) */
+.header-top { 
+    display: flex; justify-content: space-between; align-items: center; width: 100%; 
+}
 .header-item { font-size: 18px; font-weight: bold; }
 
-/* YANGI: OMBOR STATISTIKASI DIZAYNI */
+/* YANGI: XP (Level) chizig'i */
+.xp-container {
+    width: 100%; background: #3e2723; height: 12px;
+    border-radius: 6px; border: 1px solid #8d6e63;
+    position: relative; overflow: hidden;
+}
+.xp-fill {
+    height: 100%; background: linear-gradient(90deg, #2196f3, #42a5f5); /* Ko'k rang */
+    width: 0%; transition: width 0.3s ease;
+}
+.level-text {
+    font-size: 12px; text-align: center; margin-top: 2px; color: #b3e5fc; font-weight: bold;
+}
+
+/* YANGI: Ombor Statistikasi */
 .stats-bar {
     display: flex; justify-content: center; gap: 20px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.4); /* Qoramtir fon */
     padding: 8px; border-radius: 12px;
     margin-bottom: 20px;
     border: 2px solid rgba(255,255,255,0.2);
@@ -53,9 +72,9 @@ body {
 }
 .building:active { transform: translateY(4px); box-shadow: 0 4px 0 #3e2723; }
 
+/* Emoji kattaligi */
 .b-icon { font-size: 50px; display: block; margin-bottom: 10px; }
 .b-name { font-weight: bold; font-size: 14px; color: #fff8e1; text-transform: uppercase; }
-
 .b-count { 
     position: absolute; top: -10px; right: -10px; 
     background: #d32f2f; color: white; border-radius: 50%; 
