@@ -3,138 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Katta Ferma (Grafika)</title>
+    <title>Katta Ferma</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --grass-dark: #388e3c;
-            --grass-light: #81c784;
-            --wood: #5d4037;
-            --wood-light: #8d6e63;
-            --btn-blue: #29b6f6;
-            --btn-green: #66bb6a;
-        }
-        body {
-            margin: 0; padding: 10px;
-            /* Yanada yorqinroq maysa */
-            background-color: var(--grass-dark);
-            background-image: radial-gradient(var(--grass-light) 20%, transparent 20%),
-                              radial-gradient(var(--grass-light) 20%, transparent 20%);
-            background-size: 30px 30px;
-            background-position: 0 0, 15px 15px;
-            font-family: 'Segoe UI', sans-serif;
-            color: white; user-select: none;
-            overflow-x: hidden;
-            padding-bottom: 90px;
-        }
-
-        /* HEADER */
-        .header {
-            background: #4e342e; border: 3px solid #3e2723;
-            border-radius: 15px; padding: 10px 15px;
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 20px;
-            position: sticky; top: 0; z-index: 100; 
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-        }
-        .header-item { display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 16px;}
-        .coin-img, .food-img { width: 24px; height: 24px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
-        .coin-text { color: #ffd700; }
-        .food-text { color: #ffab40; }
-
-        /* --- XARITA (BINOLAR) --- */
-        .map-title { text-align: center; margin: 0 0 15px 0; color: #ffe0b2; text-shadow: 1px 1px 2px #3e2723; font-size: 22px; }
-        .map-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-        }
-        .building {
-            background: linear-gradient(to bottom, #a1887f, #5d4037);
-            border-radius: 20px; padding: 15px 5px; text-align: center;
-            border: 4px solid #4e342e; box-shadow: 0 8px 0 #3e2723;
-            cursor: pointer; position: relative;
-            transition: all 0.1s;
-        }
-        .building:active { transform: translateY(4px); box-shadow: 0 4px 0 #3e2723; }
-        
-        /* Bino rasmi uchun stil */
-        .b-img { 
-            width: 90px; height: 90px; object-fit: contain; 
-            display: block; margin: 0 auto 10px auto; 
-            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.4));
-        }
-        .b-name { font-weight: bold; font-size: 14px; color: #fff8e1; text-transform: uppercase; letter-spacing: 1px;}
-        
-        .b-count { 
-            position: absolute; top: -10px; right: -10px; 
-            background: #d32f2f; color: white; border-radius: 50%; 
-            padding: 5px 10px; font-size: 14px; border: 3px solid white; 
-            font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-        }
-
-        /* --- ICHKI KO'RINISH --- */
-        #interior-view { display: none; }
-        .back-btn {
-            background: #d32f2f; color: white; border: none; padding: 12px 25px;
-            border-radius: 12px; font-weight: bold; margin-bottom: 20px;
-            cursor: pointer; border-bottom: 5px solid #b71c1c;
-            display: flex; align-items: center; gap: 10px; font-size: 16px;
-        }
-        
-        .farm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .card {
-            background: #fff8e1; border-radius: 15px; padding: 10px 5px;
-            text-align: center; border-bottom: 5px solid #ffa000;
-            position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        /* Hayvon rasmi uchun stil */
-        .animal-img {
-            width: 70px; height: 70px; object-fit: contain;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
-            transition: transform 0.2s;
-        }
-        .progress-container { 
-            width: 90%; height: 8px; background: #bdbdbd; 
-            margin: 8px auto 0; border-radius: 4px; overflow: hidden; border: 1px solid #757575;
-        }
-        .progress-fill { height: 100%; width: 0%; background: linear-gradient(to right, #66bb6a, #43a047); }
-
-        /* PASTKI MENYU */
-        .controls {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: #4e342e; padding: 12px;
-            display: flex; justify-content: space-around;
-            border-top: 5px solid #3e2723; z-index: 1000;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
-        }
-        .ctrl-btn {
-            background: var(--btn-blue); color: white; border: none;
-            padding: 12px 30px; border-radius: 15px; font-weight: bold;
-            border-bottom: 5px solid #0288d1; font-size: 16px; display: flex; align-items: center; gap: 8px;
-        }
-        .ctrl-save { background: var(--btn-green); border-bottom-color: #388e3c; }
-        .btn-icon { width: 24px; height: 24px; }
-
-        /* DO'KON */
-        #shop-modal {
-            display: none; position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); width: 85%;
-            background: #fff3e0; border: 5px solid #5d4037; border-radius: 20px;
-            padding: 25px; z-index: 2000; color: #3e2723;
-            box-shadow: 0 0 100px rgba(0,0,0,0.8);
-        }
-        .shop-row button {
-            width: 100%; margin-bottom: 12px; padding: 15px;
-            border: none; border-radius: 12px; font-weight: bold; cursor: pointer;
-            color: white; font-size: 16px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .shop-anim-img { width: 40px; height: 40px; margin-right: 10px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));}
-        .btn-buy-anim { background: #43a047; border-bottom: 5px solid #2e7d32; }
-        .btn-buy-food { background: #fb8c00; border-bottom: 5px solid #e65100; }
-        .close-shop { background: #d32f2f; justify-content: center !important; margin-top: 15px; border-bottom: 5px solid #b71c1c; }
-
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        .pop { animation: pop 0.3s ease; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -159,22 +30,22 @@
         <h3 class="map-title">FERMA XARITASI</h3>
         <div class="map-grid">
             <div class="building" onclick="openBuilding('chicken')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047728.png" class="b-img" alt="Tovuqxona">
+                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047728.png" class="b-img">
                 <div class="b-name">Tovuqxona</div>
                 <div class="b-count" id="count-chicken">0</div>
             </div>
             <div class="building" onclick="openBuilding('sheep')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047879.png" class="b-img" alt="Qo'yxona">
+                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047879.png" class="b-img">
                 <div class="b-name">Qo'yxona</div>
                 <div class="b-count" id="count-sheep">0</div>
             </div>
             <div class="building" onclick="openBuilding('cow')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047936.png" class="b-img" alt="Molxona">
+                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047936.png" class="b-img">
                 <div class="b-name">Molxona</div>
                 <div class="b-count" id="count-cow">0</div>
             </div>
             <div class="building" onclick="openShop()">
-                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047656.png" class="b-img" alt="Do'kon">
+                <img src="https://cdn-icons-png.flaticon.com/512/3047/3047656.png" class="b-img">
                 <div class="b-name">Bozor & Yem</div>
             </div>
         </div>
@@ -191,11 +62,11 @@
 
     <div class="controls">
         <button class="ctrl-btn" onclick="openShop()">
-            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="btn-icon" alt="shop">
+            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" class="btn-icon">
             Do'kon
         </button>
         <button class="ctrl-btn ctrl-save" onclick="sellAll()">
-            <img src="https://cdn-icons-png.flaticon.com/512/246/246172.png" class="btn-icon" alt="sell">
+            <img src="https://cdn-icons-png.flaticon.com/512/246/246172.png" class="btn-icon">
             Sotish
         </button>
     </div>
@@ -220,188 +91,16 @@
                 <div style="display: flex; align-items: center;"><img src="https://cdn-icons-png.flaticon.com/512/2917/2917995.png" class="shop-anim-img"> 5 ta YEM</div>
                 <span>2 💰</span>
             </button>
+            
+            <button class="btn-donate" onclick="buyRealMoney()">
+                <div style="display: flex; align-items: center;">⭐ 1000 FAM + 10 YEM</div>
+                <span>50 Stars</span>
+            </button>
+
             <button class="shop-row close-shop" onclick="closeShop()">Yopish ❌</button>
         </div>
     </div>
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-const urlParams = new URLSearchParams(window.location.search);
-
-// SOZLAMALAR
-const CONFIG = {
-    chicken: { time: 3, food: 1, name: "TOVUQXONA" },
-    sheep:   { time: 5, food: 2, name: "QO'YXONA" },
-    cow:     { time: 8, food: 3, name: "MOLXONA" }
-};
-
-let game = {
-    balance: parseInt(urlParams.get('b')) || 10,
-    food: parseInt(urlParams.get('f')) || 5,
-    inventory: parseInventory(urlParams.get('i')),
-    warehouse: parseWarehouse(urlParams.get('w'))
-};
-
-let animalTimers = [];
-let currentView = 'map'; 
-let currentBuilding = null; 
-
-function parseInventory(str) {
-    if (!str) return {};
-    let inv = {};
-    str.split(',').forEach(item => {
-        let [type, count] = item.split(':');
-        if (type && count) inv[type] = parseInt(count);
-    });
-    return inv;
-}
-function parseWarehouse(str) {
-    if (!str) return {eggs: 0, wool: 0, meat: 0};
-    let wh = {eggs: 0, wool: 0, meat: 0};
-    str.split(',').forEach(p => { if(p.includes(':')) { let [k,v]=p.split(':'); wh[getFullKey(k)]=parseInt(v); }});
-    return wh;
-}
-function getFullKey(k) { if(k=='E')return 'eggs'; if(k=='W')return 'wool'; if(k=='M')return 'meat'; return k; }
-
-function updateUI() {
-    document.getElementById("balance").innerText = Math.floor(game.balance);
-    document.getElementById("food").innerText = game.food;
-    document.getElementById("count-chicken").innerText = game.inventory.chicken || 0;
-    document.getElementById("count-sheep").innerText = game.inventory.sheep || 0;
-    document.getElementById("count-cow").innerText = game.inventory.cow || 0;
-}
-
-function showMap() {
-    currentView = 'map';
-    currentBuilding = null;
-    document.getElementById("map-view").style.display = "block";
-    document.getElementById("interior-view").style.display = "none";
-    updateUI();
-}
-
-function openBuilding(type) {
-    currentView = 'building';
-    currentBuilding = type;
-    document.getElementById("map-view").style.display = "none";
-    document.getElementById("interior-view").style.display = "block";
-    document.getElementById("room-title").innerText = CONFIG[type].name;
-    renderInterior(type);
-}
-
-// --- HAYVONLARNI RASM BILAN CHIZISH ---
-function renderInterior(type) {
-    const grid = document.getElementById("farm-grid");
-    grid.innerHTML = "";
-    animalTimers = []; 
-
-    const count = game.inventory[type] || 0;
-    if (count === 0) {
-        grid.innerHTML = "<p style='grid-column: span 3; color: #ffe0b2; text-align: center; font-size: 18px;'>Bu yer bo'm-bo'sh...<br>Do'kondan jonivor oling!</p>";
-        return;
-    }
-
-    for (let i = 0; i < count; i++) {
-        createAnimalCard(type, i, grid);
-    }
-}
-
-function createAnimalCard(type, index, container) {
-    const card = document.createElement("div");
-    card.className = "card";
-    const barId = `bar-${index}`;
-    const imgId = `img-${index}`;
-    
-    // Emojilar o'rniga Rasm URL lari
-    let imgUrl = '';
-    if(type=='chicken') imgUrl = 'https://cdn-icons-png.flaticon.com/512/1828/1828884.png';
-    if(type=='sheep') imgUrl = 'https://cdn-icons-png.flaticon.com/512/1998/1998610.png';
-    if(type=='cow') imgUrl = 'https://cdn-icons-png.flaticon.com/512/1998/1998627.png';
-
-    card.innerHTML = `
-        <img src="${imgUrl}" class="animal-img" id="${imgId}">
-        <div class="progress-container"><div class="progress-fill" id="${barId}"></div></div>
-    `;
-    container.appendChild(card);
-
-    animalTimers.push({
-        id: barId, imgId: imgId, type: type,
-        progress: Math.random() * 80, speed: 100 / (CONFIG[type].time * 10)
-    });
-}
-
-// GAME LOOP
-setInterval(() => {
-    if (currentView !== 'building') return;
-    animalTimers.forEach(animal => {
-        if (game.food > 0) { animal.progress += animal.speed; }
-        if (animal.progress >= 100) {
-            let cost = CONFIG[animal.type].food;
-            if (game.food >= cost) {
-                game.food -= cost;
-                animal.progress = 0;
-                produceItem(animal.type);
-                updateUI();
-                // Kichik animatsiya
-                document.getElementById(animal.imgId).classList.add('pop');
-                setTimeout(()=>document.getElementById(animal.imgId).classList.remove('pop'), 300);
-            } else { animal.progress = 99; }
-        }
-        const bar = document.getElementById(animal.id);
-        if(bar) bar.style.width = animal.progress + "%";
-    });
-}, 100);
-
-function produceItem(type) {
-    if (type === 'chicken') game.warehouse.eggs++;
-    if (type === 'sheep') game.warehouse.wool++;
-    if (type === 'cow') game.warehouse.meat++;
-}
-
-// --- ACTIONS ---
-function openShop() { document.getElementById("shop-modal").style.display = "block"; }
-function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
-
-function buyAnimal(type, price) {
-    if (game.balance >= price) {
-        game.balance -= price;
-        game.inventory[type] = (game.inventory[type] || 0) + 1;
-        updateUI();
-        tg.HapticFeedback.impactOccurred('medium');
-        if (currentView === 'building' && currentBuilding === type) { renderInterior(type); } 
-        else { tg.showAlert(`Sotib olindi! ${CONFIG[type].name}ga qarang.`); }
-    } else { tg.showAlert("Pul yetmaydi!"); }
-}
-
-function buyFood() {
-    if (game.balance >= 2) {
-        game.balance -= 2;
-        game.food += 5;
-        updateUI();
-        tg.HapticFeedback.impactOccurred('light');
-    } else tg.showAlert("Pul yetmaydi!");
-}
-
-function sellAll() {
-    let income = (game.warehouse.eggs * 2) + (game.warehouse.wool * 30) + (game.warehouse.meat * 100);
-    if (income > 0) {
-        game.balance += income;
-        game.warehouse = {eggs: 0, wool: 0, meat: 0};
-        updateUI();
-        tg.showAlert(`Sotildi! +${income} FAM`);
-    } else tg.showAlert("Ombor bo'sh!");
-}
-
-function saveGame() {
-    let invStr = Object.entries(game.inventory).map(([k,v]) => `${k}:${v}`).join(',');
-    let warStr = `E:${game.warehouse.eggs},W:${game.warehouse.wool},M:${game.warehouse.meat}`;
-    tg.sendData(JSON.stringify({
-        balance: game.balance, inventory: invStr, warehouse: warStr, food: game.food
-    }));
-}
-
-// Start
-updateUI();
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
