@@ -23,11 +23,24 @@ body {
     background: #4e342e; border: 3px solid #3e2723;
     border-radius: 15px; padding: 10px 15px;
     display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 20px;
+    align-items: center; margin-bottom: 10px;
     position: sticky; top: 0; z-index: 100; 
     box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }
 .header-item { font-size: 18px; font-weight: bold; }
+
+/* YANGI: OMBOR STATISTIKASI DIZAYNI */
+.stats-bar {
+    display: flex; justify-content: center; gap: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px; border-radius: 12px;
+    margin-bottom: 20px;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.stat-item {
+    font-size: 16px; font-weight: bold;
+    display: flex; align-items: center; gap: 5px;
+}
 
 /* XARITA */
 .map-title { text-align: center; margin: 0 0 15px 0; color: #ffe0b2; text-shadow: 1px 1px 2px #3e2723; font-size: 22px; }
@@ -40,7 +53,6 @@ body {
 }
 .building:active { transform: translateY(4px); box-shadow: 0 4px 0 #3e2723; }
 
-/* EMOJI UCHUN */
 .b-icon { font-size: 50px; display: block; margin-bottom: 10px; }
 .b-name { font-weight: bold; font-size: 14px; color: #fff8e1; text-transform: uppercase; }
 

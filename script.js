@@ -39,9 +39,16 @@ function getFullKey(k) { if(k=='E')return 'eggs'; if(k=='W')return 'wool'; if(k=
 function updateUI() {
     document.getElementById("balance").innerText = Math.floor(game.balance);
     document.getElementById("food").innerText = game.food;
+    
+    // Binolar ustidagi sonlar
     document.getElementById("count-chicken").innerText = game.inventory.chicken || 0;
     document.getElementById("count-sheep").innerText = game.inventory.sheep || 0;
     document.getElementById("count-cow").innerText = game.inventory.cow || 0;
+
+    // YANGI: Ombor statistikasi yangilanishi
+    document.getElementById("stat-egg").innerText = game.warehouse.eggs || 0;
+    document.getElementById("stat-wool").innerText = game.warehouse.wool || 0;
+    document.getElementById("stat-meat").innerText = game.warehouse.meat || 0;
 }
 
 function showMap() {
@@ -83,7 +90,6 @@ function createAnimalCard(type, index, container) {
     const barId = `bar-${index}`;
     const iconId = `icon-${index}`;
     
-    // EMOJINI TANLASH
     let emoji = type=='chicken'?'🐔':(type=='sheep'?'🐑':'🐄');
 
     card.innerHTML = `
@@ -109,7 +115,6 @@ setInterval(() => {
                 animal.progress = 0;
                 produceItem(animal.type);
                 updateUI();
-                // Emojini sakratish
                 document.getElementById(animal.iconId).classList.add('pop');
                 setTimeout(()=>document.getElementById(animal.iconId).classList.remove('pop'), 300);
             } else { animal.progress = 99; }
