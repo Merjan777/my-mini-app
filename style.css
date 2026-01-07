@@ -5,140 +5,317 @@
     --btn-blue: #29b6f6;
     --btn-green: #66bb6a;
 }
+
 body {
-    margin: 0; padding: 10px;
+    margin: 0; 
+    padding: 10px;
     background-color: var(--grass-dark);
     background-image: radial-gradient(var(--grass-light) 20%, transparent 20%),
                       radial-gradient(var(--grass-light) 20%, transparent 20%);
     background-size: 30px 30px;
     background-position: 0 0, 15px 15px;
     font-family: 'Segoe UI', sans-serif;
-    color: white; user-select: none;
+    color: white; 
+    user-select: none;
     overflow-x: hidden;
     padding-bottom: 90px; /* Pastki menyu uchun joy */
 }
 
-/* HEADER: Asosiy qism */
+/* ================= HEADER (Tepa qism) ================= */
 .header {
-    background: #4e342e; border: 3px solid #3e2723;
-    border-radius: 15px; padding: 10px 15px;
-    display: flex; flex-direction: column; /* Elementlar ustma-ust */
-    gap: 8px; margin-bottom: 10px;
-    position: sticky; top: 0; z-index: 100; 
+    background: #4e342e; 
+    border: 3px solid #3e2723;
+    border-radius: 15px; 
+    padding: 10px 15px;
+    display: flex; 
+    flex-direction: column; /* Elementlar ustma-ust */
+    gap: 8px; 
+    margin-bottom: 10px;
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
     box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }
 
 /* Header ichidagi yuqori qator (Pul, Yem, Save) */
 .header-top { 
-    display: flex; justify-content: space-between; align-items: center; width: 100%; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    width: 100%; 
 }
-.header-item { font-size: 18px; font-weight: bold; }
 
-/* YANGI: XP (Level) chizig'i */
+.header-item { 
+    font-size: 18px; 
+    font-weight: bold; 
+}
+
+/* ================= XP (LEVEL) CHIZIG'I ================= */
 .xp-container {
-    width: 100%; background: #3e2723; height: 12px;
-    border-radius: 6px; border: 1px solid #8d6e63;
-    position: relative; overflow: hidden;
-}
-.xp-fill {
-    height: 100%; background: linear-gradient(90deg, #2196f3, #42a5f5); /* Ko'k rang */
-    width: 0%; transition: width 0.3s ease;
-}
-.level-text {
-    font-size: 12px; text-align: center; margin-top: 2px; color: #b3e5fc; font-weight: bold;
+    width: 100%; 
+    background: #3e2723; 
+    height: 12px;
+    border-radius: 6px; 
+    border: 1px solid #8d6e63;
+    position: relative; 
+    overflow: hidden;
+    margin-top: 5px;
 }
 
-/* YANGI: Ombor Statistikasi */
+.xp-fill {
+    height: 100%; 
+    background: linear-gradient(90deg, #2196f3, #42a5f5); /* Ko'k rang */
+    width: 0%; 
+    transition: width 0.3s ease;
+}
+
+.level-text {
+    font-size: 12px; 
+    text-align: center; 
+    margin-top: 4px; 
+    color: #b3e5fc; 
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #000;
+}
+
+/* ================= OMBOR STATISTIKASI ================= */
 .stats-bar {
-    display: flex; justify-content: center; gap: 20px;
+    display: flex; 
+    justify-content: center; 
+    gap: 20px;
     background: rgba(0, 0, 0, 0.4); /* Qoramtir fon */
-    padding: 8px; border-radius: 12px;
+    padding: 10px; 
+    border-radius: 12px;
     margin-bottom: 20px;
     border: 2px solid rgba(255,255,255,0.2);
-}
-.stat-item {
-    font-size: 16px; font-weight: bold;
-    display: flex; align-items: center; gap: 5px;
+    backdrop-filter: blur(5px);
 }
 
-/* XARITA */
-.map-title { text-align: center; margin: 0 0 15px 0; color: #ffe0b2; text-shadow: 1px 1px 2px #3e2723; font-size: 22px; }
-.map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.stat-item {
+    font-size: 16px; 
+    font-weight: bold;
+    display: flex; 
+    align-items: center; 
+    gap: 5px;
+}
+
+/* ================= XARITA (Map) ================= */
+.map-title { 
+    text-align: center; 
+    margin: 0 0 15px 0; 
+    color: #ffe0b2; 
+    text-shadow: 1px 1px 2px #3e2723; 
+    font-size: 22px; 
+}
+
+.map-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; 
+}
+
 .building {
     background: linear-gradient(to bottom, #a1887f, #5d4037);
-    border-radius: 20px; padding: 20px 5px; text-align: center;
-    border: 4px solid #4e342e; box-shadow: 0 8px 0 #3e2723;
-    cursor: pointer; position: relative; transition: all 0.1s;
+    border-radius: 20px; 
+    padding: 20px 5px; 
+    text-align: center;
+    border: 4px solid #4e342e; 
+    box-shadow: 0 8px 0 #3e2723;
+    cursor: pointer; 
+    position: relative; 
+    transition: all 0.1s;
 }
-.building:active { transform: translateY(4px); box-shadow: 0 4px 0 #3e2723; }
 
-/* Emoji kattaligi */
-.b-icon { font-size: 50px; display: block; margin-bottom: 10px; }
-.b-name { font-weight: bold; font-size: 14px; color: #fff8e1; text-transform: uppercase; }
+.building:active { 
+    transform: translateY(4px); 
+    box-shadow: 0 4px 0 #3e2723; 
+}
+
+/* Binolar ichidagi Emojilar */
+.b-icon { 
+    font-size: 50px; 
+    display: block; 
+    margin-bottom: 10px; 
+}
+
+.b-name { 
+    font-weight: bold; 
+    font-size: 14px; 
+    color: #fff8e1; 
+    text-transform: uppercase; 
+}
+
+/* Bino ustidagi qizil dumaloq son */
 .b-count { 
-    position: absolute; top: -10px; right: -10px; 
-    background: #d32f2f; color: white; border-radius: 50%; 
-    padding: 5px 10px; font-size: 14px; border: 3px solid white; 
-    font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    position: absolute; 
+    top: -10px; 
+    right: -10px; 
+    background: #d32f2f; 
+    color: white; 
+    border-radius: 50%; 
+    padding: 5px 10px; 
+    font-size: 14px; 
+    border: 3px solid white; 
+    font-weight: bold; 
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 }
 
-/* ICHKI XONA */
-#interior-view { display: none; }
+/* ================= ICHKI XONA (Interior) ================= */
+#interior-view { 
+    display: none; 
+}
+
 .back-btn {
-    background: #d32f2f; color: white; border: none; padding: 12px 25px;
-    border-radius: 12px; font-weight: bold; margin-bottom: 20px;
-    cursor: pointer; border-bottom: 5px solid #b71c1c;
-    display: flex; align-items: center; gap: 10px; font-size: 16px;
+    background: #d32f2f; 
+    color: white; 
+    border: none; 
+    padding: 12px 25px;
+    border-radius: 12px; 
+    font-weight: bold; 
+    margin-bottom: 20px;
+    cursor: pointer; 
+    border-bottom: 5px solid #b71c1c;
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    font-size: 16px;
 }
-.farm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+
+.farm-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px; 
+}
+
 .card {
-    background: #fff8e1; border-radius: 15px; padding: 10px 5px;
-    text-align: center; border-bottom: 5px solid #ffa000;
-    position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    background: #fff8e1; 
+    border-radius: 15px; 
+    padding: 10px 5px;
+    text-align: center; 
+    border-bottom: 5px solid #ffa000;
+    position: relative; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-.animal-icon { font-size: 45px; margin-bottom: 5px; display: block; transition: transform 0.1s; }
+
+.animal-icon { 
+    font-size: 45px; 
+    margin-bottom: 5px; 
+    display: block; 
+    transition: transform 0.1s; 
+}
 
 .progress-container { 
-    width: 90%; height: 8px; background: #bdbdbd; 
-    margin: 8px auto 0; border-radius: 4px; overflow: hidden; border: 1px solid #757575;
+    width: 90%; 
+    height: 8px; 
+    background: #bdbdbd; 
+    margin: 8px auto 0; 
+    border-radius: 4px; 
+    overflow: hidden; 
+    border: 1px solid #757575;
 }
-.progress-fill { height: 100%; width: 0%; background: linear-gradient(to right, #66bb6a, #43a047); }
 
-/* PASTKI MENYU */
+.progress-fill { 
+    height: 100%; 
+    width: 0%; 
+    background: linear-gradient(to right, #66bb6a, #43a047); 
+}
+
+/* ================= PASTKI MENYU (Controls) ================= */
 .controls {
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    background: #4e342e; padding: 12px;
-    display: flex; justify-content: space-around;
-    border-top: 5px solid #3e2723; z-index: 1000;
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%;
+    background: #4e342e; 
+    padding: 12px;
+    display: flex; 
+    justify-content: space-around;
+    border-top: 5px solid #3e2723; 
+    z-index: 1000;
     box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+    box-sizing: border-box; /* Padding sig'ishi uchun */
 }
-.ctrl-btn {
-    background: var(--btn-blue); color: white; border: none;
-    padding: 12px 30px; border-radius: 15px; font-weight: bold;
-    border-bottom: 5px solid #0288d1; font-size: 16px;
-}
-.ctrl-save { background: var(--btn-green); border-bottom-color: #388e3c; }
 
-/* DO'KON MODAL */
+.ctrl-btn {
+    background: var(--btn-blue); 
+    color: white; 
+    border: none;
+    padding: 12px 30px; 
+    border-radius: 15px; 
+    font-weight: bold;
+    border-bottom: 5px solid #0288d1; 
+    font-size: 16px;
+}
+
+.ctrl-save { 
+    background: var(--btn-green); 
+    border-bottom-color: #388e3c; 
+}
+
+/* ================= DO'KON MODAL (Shop) ================= */
 #shop-modal {
-    display: none; position: fixed; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); width: 85%;
-    background: #fff3e0; border: 5px solid #5d4037; border-radius: 20px;
-    padding: 25px; z-index: 2000; color: #3e2723;
+    display: none; 
+    position: fixed; 
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    width: 85%;
+    background: #fff3e0; 
+    border: 5px solid #5d4037; 
+    border-radius: 20px;
+    padding: 25px; 
+    z-index: 2000; 
+    color: #3e2723;
     box-shadow: 0 0 100px rgba(0,0,0,0.8);
+    max-height: 90vh; /* Ekranga sig'masa scroll bo'lishi uchun */
+    overflow-y: auto;
 }
+
 .shop-row button {
-    width: 100%; margin-bottom: 12px; padding: 15px;
-    border: none; border-radius: 12px; font-weight: bold; cursor: pointer;
-    color: white; font-size: 16px; display: flex; justify-content: space-between; align-items: center;
+    width: 100%; 
+    margin-bottom: 12px; 
+    padding: 15px;
+    border: none; 
+    border-radius: 12px; 
+    font-weight: bold; 
+    cursor: pointer;
+    color: white; 
+    font-size: 16px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
 }
-.btn-buy-anim { background: #43a047; border-bottom: 5px solid #2e7d32; }
-.btn-buy-food { background: #fb8c00; border-bottom: 5px solid #e65100; }
+
+.btn-buy-anim { 
+    background: #43a047; 
+    border-bottom: 5px solid #2e7d32; 
+}
+
+.btn-buy-food { 
+    background: #fb8c00; 
+    border-bottom: 5px solid #e65100; 
+}
+
 .btn-donate { 
     background: linear-gradient(45deg, #8e44ad, #9b59b6); 
-    border-bottom: 5px solid #71368a; box-shadow: 0 0 15px rgba(142,68,173,0.5); 
+    border-bottom: 5px solid #71368a; 
+    box-shadow: 0 0 15px rgba(142,68,173,0.5); 
 }
-.close-shop { background: #d32f2f; justify-content: center !important; margin-top: 15px; border-bottom: 5px solid #b71c1c; }
 
-@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-.pop { animation: pop 0.3s ease; }
+.close-shop { 
+    background: #d32f2f; 
+    justify-content: center !important; 
+    margin-top: 15px; 
+    border-bottom: 5px solid #b71c1c; 
+}
+
+/* ================= ANIMATSIYALAR ================= */
+@keyframes pop { 
+    0% { transform: scale(1); } 
+    50% { transform: scale(1.3); } 
+    100% { transform: scale(1); } 
+}
+
+.pop { 
+    animation: pop 0.3s ease; 
+}

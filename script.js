@@ -14,13 +14,12 @@ let game = {
     food: parseInt(urlParams.get('f')) || 5,
     inventory: parseInventory(urlParams.get('i')),
     warehouse: parseWarehouse(urlParams.get('w')),
-    level: parseInt(urlParams.get('l')) || 1, // YANGI
-    xp: parseInt(urlParams.get('x')) || 0     // YANGI
+    level: parseInt(urlParams.get('l')) || 1, 
+    xp: parseInt(urlParams.get('x')) || 0
 };
 
 let animalTimers = [];
 let currentView = 'map'; 
-let currentBuilding = null; 
 
 function parseInventory(str) {
     if (!str) return {};
@@ -31,16 +30,30 @@ function parseInventory(str) {
     });
     return inv;
 }
+
 function parseWarehouse(str) {
     if (!str) return {eggs: 0, wool: 0, meat: 0};
     let wh = {eggs: 0, wool: 0, meat: 0};
-    str.split(',').forEach(p => { if(p.includes(':')) { let [k,v]=p.split(':'); wh[getFullKey(k)]=parseInt(v); }});
+    str.split(',').forEach(p => { 
+        if(p.includes(':')) { 
+            let [k,v]=p.split(':'); 
+            wh[getFullKey(k)]=parseInt(v); 
+        }
+    });
     return wh;
 }
-function getFullKey(k) { if(k=='E')return 'eggs'; if(k=='W')return 'wool'; if(k=='M')return 'meat'; return k; }
 
-// --- YANGI: XP HISOBLASH ---
-function getXpForNextLevel() { return game.level * 100; }
+function getFullKey(k) { 
+    if(k=='E') return 'eggs'; 
+    if(k=='W') return 'wool'; 
+    if(k=='M') return 'meat'; 
+    return k; 
+}
+
+// --- XP VA LEVEL TIZIMI ---
+function getXpForNextLevel() { 
+    return game.level * 100; 
+}
 
 function addXp(amount) {
     game.xp += amount;
@@ -66,7 +79,7 @@ function updateUI() {
     document.getElementById("stat-wool").innerText = game.warehouse.wool || 0;
     document.getElementById("stat-meat").innerText = game.warehouse.meat || 0;
 
-    // Level va Bar
+    // Level va XP Bar
     document.getElementById("level").innerText = game.level;
     document.getElementById("xp").innerText = game.xp + " / " + getXpForNextLevel();
     let percent = (game.xp / getXpForNextLevel()) * 100;
@@ -75,7 +88,6 @@ function updateUI() {
 
 function showMap() {
     currentView = 'map';
-    currentBuilding = null;
     document.getElementById("map-view").style.display = "block";
     document.getElementById("interior-view").style.display = "none";
     updateUI();
@@ -83,7 +95,6 @@ function showMap() {
 
 function openBuilding(type) {
     currentView = 'building';
-    currentBuilding = type;
     document.getElementById("map-view").style.display = "none";
     document.getElementById("interior-view").style.display = "block";
     document.getElementById("room-title").innerText = CONFIG[type].name;
@@ -112,11 +123,23 @@ function createAnimalCard(type, index, container) {
     const barId = `bar-${index}`;
     const iconId = `icon-${index}`;
     let emoji = type=='chicken'?'🐔':(type=='sheep'?'🐑':'🐄');
-    card.innerHTML = `<div class="animal-icon" id="${iconId}">${emoji}</div><div class="progress-container"><div class="progress-fill" id="${barId}"></div></div>`;
+
+    card.innerHTML = `
+        <div class="animal-icon" id="${iconId}">${emoji}</div>
+        <div class="progress-container"><div class="progress-fill" id="${barId}"></div></div>
+    `;
     container.appendChild(card);
-    animalTimers.push({id: barId, iconId: iconId, type: type, progress: Math.random() * 80, speed: 100 / (CONFIG[type].time * 10)});
+
+    animalTimers.push({
+        id: barId, 
+        iconId: iconId, 
+        type: type, 
+        progress: Math.random() * 80, 
+        speed: 100 / (CONFIG[type].time * 10)
+    });
 }
 
+// --- O'YIN TAYMERI ---
 setInterval(() => {
     if (currentView !== 'building') return;
     animalTimers.forEach(animal => {
@@ -127,7 +150,7 @@ setInterval(() => {
                 game.food -= cost;
                 animal.progress = 0;
                 produceItem(animal.type);
-                addXp(CONFIG[animal.type].xpReward); // XP QO'SHISH
+                addXp(CONFIG[animal.type].xpReward); // XP qo'shish
                 updateUI();
                 document.getElementById(animal.iconId).classList.add('pop');
                 setTimeout(()=>document.getElementById(animal.iconId).classList.remove('pop'), 300);
@@ -148,7 +171,7 @@ function openShop() { document.getElementById("shop-modal").style.display = "blo
 function closeShop() { document.getElementById("shop-modal").style.display = "none"; }
 
 function buyAnimal(type, price) {
-    if (game.level < CONFIG[type].levelReq) { // LEVEL TEKSHIRISH
+    if (game.level < CONFIG[type].levelReq) {
         tg.showAlert(`🔒 Bu hayvon ${CONFIG[type].levelReq}-levelda ochiladi!`);
         return;
     }
@@ -157,8 +180,8 @@ function buyAnimal(type, price) {
         game.inventory[type] = (game.inventory[type] || 0) + 1;
         updateUI();
         tg.HapticFeedback.impactOccurred('medium');
-        if (currentView === 'building' && currentBuilding === type) { renderInterior(type); } 
-        else { tg.showAlert(`Sotib olindi! ${CONFIG[type].name}ga qarang.`); }
+        if (currentView === 'building') { renderInterior(type); } 
+        else { tg.showAlert(`Sotib olindi!`); }
     } else { tg.showAlert("Pul yetmaydi!"); }
 }
 
